@@ -8,8 +8,9 @@ HomeRacker Community is a community-driven repository for sharing creations buil
 ## Tools & Structure
 - **Languages**: OpenSCAD (.scad), Python, Bash
 - **Preferred Tooling**: GitHub MCP Server, Context7 MCP Server
+- **Preferred LLM**: Claude Opus 4.6
 - **Key Dirs**: `/models/` (SCAD files)
-- **HomeRacker Standards**: 15mm base unit, 4mm lock pins, 2mm walls, 0.2mm tolerance. See `README.md` for details.
+- **HomeRacker Standards**: 15mm base unit, 4mm lock pins, 2mm walls, 0.2mm tolerance. See [homeracker README](https://github.com/kellerlabs/homeracker#readme) for details.
 - **Contribution Guide**: See `CONTRIBUTING.md` for setup and workflow instructions.
 - **Dependency Manager**: Use `scadm` to install OpenSCAD and libraries
   - Install: `scadm` (installs OpenSCAD + libraries from `scadm.json`)
@@ -24,7 +25,7 @@ HomeRacker Community is a community-driven repository for sharing creations buil
   - Docs: Essential info only - what/why/how in <100 lines when possible
   - GitHub issues/PRs: Clear problem/solution, skip verbose explanations
 - **Commits**: Use [Conventional Commits](https://www.conventionalcommits.org/) format
-  - Types: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`
+  - Types: see [release-please-config.json](.github/config/release-please-config.json) for the effective list
   - Format: `type(scope): description` or `type: description`
   - Breaking changes: Add `!` (e.g., `feat!: change base unit`)
 

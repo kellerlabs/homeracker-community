@@ -35,8 +35,8 @@ scadm install
 # Install pre-commit
 pip install pre-commit
 
-# Additional dependencies for OpenSCAD and pre-commit (Ubuntu / Debian)
-sudo apt install libopengl0 shellcheck
+# Additional dependencies for pre-commit (Ubuntu / Debian)
+sudo apt install shellcheck
 
 # Install the git hooks
 pre-commit install --install-hooks -t commit-msg -t pre-commit
@@ -55,6 +55,8 @@ pre-commit run --all-files
 - **Walls**: 2mm thickness
 - **Tolerance**: 0.2mm
 - **Quality**: `$fn=100` for production
+
+> See the [homeracker core README](https://github.com/kellerlabs/homeracker#readme) for full standards and dimension details.
 
 ## 🛠️ Development Guidelines
 
@@ -84,6 +86,8 @@ This project uses [Conventional Commits](https://www.conventionalcommits.org/) f
 ```
 
 ### Commit Types
+
+See [release-please-config.json](.github/config/release-please-config.json) for the effective list. Common types:
 
 | Type | Description | Version Bump |
 |------|-------------|--------------|
