@@ -1,0 +1,45 @@
+---
+name: Validate OpenSCAD Models
+
+on:
+  pull_request:
+    paths:
+      - 'models/**/*.scad'
+      - '.github/workflows/validate-models.yml'
+      - 'scadm.json'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libglu1-mesa libfuse2 libegl1 libxcb-cursor0
+
+      - name: Install OpenSCAD and dependencies
+        run: |
+          pip install scadm
+          scadm install
+
+      - name: Validate models
+        run: |
+          find models -name '*.scad' | while read -r model; do
+            log="/tmp/$(basename "$model" .scad).log"
+            echo "Rendering $model..."
+            xvfb-run openscad --export-format binstl -o /tmp/out.stl "$model" >"$log" 2>&1 || { echo "FAILED: $model"; exit 1; }
+          done
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: render-logs
+          path: /tmp/*.log
+          retention-days: 7

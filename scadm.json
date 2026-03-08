@@ -1,0 +1,16 @@
+{
+  "dependencies": [
+    {
+      "name": "homeracker",
+      "repository": "kellerlabs/homeracker",
+      "version": "homeracker-v1.7.7",
+      "source": "github"
+    },
+    {
+      "name": "BOSL2",
+      "repository": "BelfrySCAD/BOSL2",
+      "version": "eadc19a9eb2a8f908f2d07a6d3952f81b2369e24",
+      "source": "github"
+    }
+  ]
+}

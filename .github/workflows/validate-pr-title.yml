@@ -1,0 +1,27 @@
+---
+name: Validate PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR title
+        uses: camunda/infra-global-github-actions/teams/infra/pull-request/validate-title@a6b5d349d0324cbccd034990ae5c505d9bf6d04c
+        with:
+          # Keep in sync with .github/config/release-please-config.json changelog-sections
+          types: |
+            feat
+            fix
+            deps
+            docs
+            ci
+            test
+            chore
+            refactor
