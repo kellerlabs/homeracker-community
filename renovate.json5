@@ -1,0 +1,47 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":enablePreCommit",
+    "local>kellerlabs/homeracker:renovate-dependencies.json"
+  ],
+  // Ignore any repository config presets
+  "ignorePresets": [":all"],
+  // Disable platform-native automerge, let Renovate handle merges directly
+  "platformAutomerge": false,
+  "schedule": ["* * * * 0,6"],
+  // Use "deps" as commit type instead of "chore(deps)"
+  "semanticCommits": "enabled",
+  "semanticCommitType": "deps",
+  "semanticCommitScope": null,
+  // Package rules to group updates and override semanticPrefixFixDepsChoreOthers preset
+  "packageRules": [
+    // Override the semanticPrefixFixDepsChoreOthers preset from config:recommended
+    {
+      "matchPackageNames": ["*"],
+      "semanticCommitType": "deps"
+    },
+    {
+      // Group all GitHub Actions updates together
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "groupSlug": "github-actions",
+      "automerge": true
+    },
+    {
+      "matchPackageNames": [
+        "camunda/infra-global-github-actions",
+        "https://github.com/BelfrySCAD/BOSL2.git",
+        "kellerlabs/homeracker"
+      ],
+      "automerge": true
+    },
+    {
+      "matchManagers": ["pre-commit"],
+      "groupName": "pre-commit hooks",
+      "groupSlug": "pre-commit-hooks",
+      "separateMajorMinor": false,
+      "automerge": true
+    }
+  ]
+}
