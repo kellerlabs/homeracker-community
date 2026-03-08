@@ -36,7 +36,7 @@ HomeRacker Community is a community-driven repository for sharing creations buil
 4. **Provide outline** before implementation for confirmation
 5. **Make the change** and immediately test it - do NOT announce completion before testing
 6. **Update** existing README.md files and CONTRIBUTING.md where applicable
-7. **Run pre-commit hooks** to catch formatting/linting issues before commit. Fix any issues found.
+7. **Run pre-commit hooks** before every commit — **no skipping, no `--no-verify`, no `# noqa` ignores**. Every failure MUST be fixed.
 8. **On errors**: Step back, check docs, ask user if stuck—don't iterate blindly
 
 ## OpenSCAD Guidelines
