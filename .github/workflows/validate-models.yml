@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'models/**/*.scad'
+      - 'cmd/**'
       - '.github/workflows/validate-models.yml'
       - 'scadm.json'
 

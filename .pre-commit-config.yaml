@@ -35,3 +35,11 @@ repos:
     hooks:
       - id: yamllint
         args: ['-c', '.lint/yamllint/.yamllint']
+  - repo: local
+    hooks:
+      - id: makerworld-export
+        name: MakerWorld export
+        entry: .githooks/makerworld-export
+        language: script
+        files: ^models/.*\.scad$
+        pass_filenames: false
