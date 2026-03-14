@@ -225,8 +225,7 @@ module stiffener_frontpanel(stiffener_width=BASE_UNIT, orient=UP) {
   stiffener_side_length = BASE_UNIT - BASE_STRENGTH;
   stopper_wedge = [stiffener_width, stiffener_side_length, stiffener_side_length];
   wedge_chamfer = BASE_CHAMFER;
-     
-          
+
   tag_scope("stiffener") diff() wedge(stopper_wedge, orient=orient) {
       tag("remove") attach("bot_edge", LEFT+FWD, overlap=BASE_STRENGTH*sqrt(2))
       chamfer_edge_mask(l=stiffener_width, chamfer=BASE_STRENGTH);
