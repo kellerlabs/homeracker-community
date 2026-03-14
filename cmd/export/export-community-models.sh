@@ -14,9 +14,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 #   - Directories: auto-discover all .scad files
 #   - Files: export specific .scad file
 EXPORT_PATHS=(
-    # Add model paths here as they are ported, e.g.:
-    # "models/temp_locking_pin"
-    # "models/patch_panel"
+    "models/temp_locking_pin/temp_pin.scad"
 )
 
 if [ ${#EXPORT_PATHS[@]} -eq 0 ]; then

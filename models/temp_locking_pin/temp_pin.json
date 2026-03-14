@@ -1,0 +1,60 @@
+{
+    "fileFormatVersion": "1",
+    "parameterSets": {
+        "New set 1": {
+            "$fn": "64",
+            "barb_overhang": "0.80000000000000004",
+            "barb_ramp_length": "4",
+            "handle_diameter": "20",
+            "handle_hole_diameter": "12",
+            "prong_gap": "1.3999999999999999",
+            "prong_length": "8",
+            "shaft_length": "13",
+            "taper_length": "2"
+        },
+        "temp_pin_b": {
+            "$fn": "64",
+            "barb_overhang": "0.40000000000000002",
+            "barb_ramp_length": "3",
+            "handle_diameter": "20",
+            "handle_hole_diameter": "12",
+            "prong_gap": "1.3999999999999999",
+            "prong_length": "8",
+            "shaft_length": "13",
+            "taper_length": "1.5"
+        },
+        "temp_pin_a": {
+            "$fn": "64",
+            "barb_overhang": "0.59999999999999998",
+            "barb_ramp_length": "4",
+            "handle_diameter": "20",
+            "handle_hole_diameter": "12",
+            "prong_gap": "1.3999999999999999",
+            "prong_length": "8",
+            "shaft_length": "13",
+            "taper_length": "1.5"
+        },
+        "temp_pin_c": {
+            "$fn": "64",
+            "barb_overhang": "0.29999999999999999",
+            "barb_ramp_length": "3",
+            "handle_diameter": "20",
+            "handle_hole_diameter": "12",
+            "prong_gap": "1.3999999999999999",
+            "prong_length": "12",
+            "shaft_length": "16",
+            "taper_length": "1.8"
+        },
+        "temp_pin_d": {
+            "$fn": "64",
+            "barb_overhang": "0.29999999999999999",
+            "barb_ramp_length": "3",
+            "handle_diameter": "20",
+            "handle_hole_diameter": "12",
+            "prong_gap": "1.3999999999999999",
+            "prong_length": "12",
+            "shaft_length": "16",
+            "taper_length": "1.8"
+        }
+    }
+}
