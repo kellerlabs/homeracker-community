@@ -80,9 +80,9 @@ render_scad_item() {
     local glb_file="${GLB_DIR}/${id}.glb"
     local log_file="${RESULTS_DIR}/log-${id}.txt"
 
-    if eval OPENSCADPATH="${OPENSCADPATH}" ${OPENSCAD_CMD} \
+    if eval OPENSCADPATH="${OPENSCADPATH}" "${OPENSCAD_CMD}" \
         -o "${stl_file}" \
-        ${d_args} \
+        "${d_args}" \
         "${scad_file}" \
         --export-format=binstl 2>"${log_file}"; then
 
@@ -152,14 +152,14 @@ for category in supports connectors lockpins; do
         for key in $(echo "${params_json}" | jq -r 'keys[]'); do
             value=$(echo "${params_json}" | jq -r ".${key}")
             if echo "${params_json}" | jq -e ".${key} | type == \"string\"" >/dev/null 2>&1; then
-                d_args="${d_args} -D ${key}=\\\"${value}\\\""
+                d_args="${d_args} -D ${key}=\"${value}\""
             else
                 d_args="${d_args} -D ${key}=${value}"
             fi
         done
 
         wait_for_slot
-        render_scad_item "${id}" "${scad_file}" "${category}" ${d_args} &
+        render_scad_item "${id}" "${scad_file}" "${category}" "${d_args}" &
         running_pids+=($!)
     done
 done
@@ -193,7 +193,8 @@ convert_raw_model() {
     local name_no_ext="${filename%.*}"
     local display_name
     display_name=$(echo "${name_no_ext}" | sed 's/+-+/ - /g; s/+/ /g; s/  */ /g; s/^ //; s/ $//')
-    local id_base="other-$(echo "${name_no_ext}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g; s/--*/-/g; s/^-//; s/-$//')"
+    local id_base
+    id_base="other-$(echo "${name_no_ext}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g; s/--*/-/g; s/^-//; s/-$//')"
     local log_file="${RESULTS_DIR}/rawlog-${id_base}.txt"
 
     local split_json
