@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Pre-commit hook for MakerWorld exports
+#
+# Exports all configured models and validates they are committed.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Run the export script
+if ! "${PROJECT_ROOT}/cmd/export/export-community-models.sh"; then
+    exit 1
+fi
+
+# Check if exported files have uncommitted/unstaged changes
+cd "${PROJECT_ROOT}"
+MODIFIED=$(git diff --name-only models/*/makerworld/ 2>/dev/null || true)
+UNTRACKED=$(git ls-files --others --exclude-standard models/*/makerworld/ 2>/dev/null || true)
+
+if [ -n "$MODIFIED" ] || [ -n "$UNTRACKED" ]; then
+    echo ""
+    echo "ERROR: Exported MakerWorld files have uncommitted/unstaged changes"
+    echo ""
+    if [ -n "$MODIFIED" ]; then
+        echo "Modified files (not staged):"
+        echo "$MODIFIED"
+    fi
+    if [ -n "$UNTRACKED" ]; then
+        echo "Untracked files:"
+        echo "$UNTRACKED"
+    fi
+    echo ""
+    echo "Run the following to stage them:"
+    echo "  git add models/*/makerworld/"
+    exit 1
+fi
+
+echo "All exports are committed"
