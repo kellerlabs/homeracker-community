@@ -1,5 +1,7 @@
 # Temporary Locking Pin
 
+![Preview](preview.png)
+
 A snap-fit locking pin designed for the HomeRacker system. It inserts into a standard lockpin hole and holds in place with flexible barbed prongs, but can be removed by squeezing the prongs together.
 
 ## Design
