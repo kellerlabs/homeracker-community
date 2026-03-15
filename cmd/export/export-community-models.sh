@@ -66,6 +66,14 @@ if [ $FAILED -eq 1 ]; then
 fi
 
 echo ""
+echo "Rendering preview images..."
+if ! "${SCRIPT_DIR}/render-previews.sh" "${FILES_TO_EXPORT[@]}"; then
+    echo ""
+    echo "ERROR: Preview rendering failed"
+    exit 1
+fi
+
+echo ""
 echo "Validating exported models..."
 if ! "${PROJECT_ROOT}/cmd/test/test-models.sh"; then
     echo ""

@@ -13,27 +13,18 @@ if ! "${PROJECT_ROOT}/cmd/export/export-community-models.sh"; then
     exit 1
 fi
 
-# Check if exported files have uncommitted/unstaged changes
+# Auto-stage any generated files
 cd "${PROJECT_ROOT}"
-MODIFIED=$(git diff --name-only models/*/makerworld/ 2>/dev/null || true)
-UNTRACKED=$(git ls-files --others --exclude-standard models/*/makerworld/ 2>/dev/null || true)
+MODIFIED=$(git diff --name-only models/*/makerworld/ models/*/preview.png 2>/dev/null || true)
+UNTRACKED=$(git ls-files --others --exclude-standard models/*/makerworld/ models/*/preview.png 2>/dev/null || true)
 
-if [ -n "$MODIFIED" ] || [ -n "$UNTRACKED" ]; then
-    echo ""
-    echo "ERROR: Exported MakerWorld files have uncommitted/unstaged changes"
-    echo ""
-    if [ -n "$MODIFIED" ]; then
-        echo "Modified files (not staged):"
-        echo "$MODIFIED"
-    fi
-    if [ -n "$UNTRACKED" ]; then
-        echo "Untracked files:"
-        echo "$UNTRACKED"
-    fi
-    echo ""
-    echo "Run the following to stage them:"
-    echo "  git add models/*/makerworld/"
-    exit 1
+TO_STAGE=""
+[ -n "$MODIFIED" ] && TO_STAGE="$MODIFIED"
+[ -n "$UNTRACKED" ] && TO_STAGE="${TO_STAGE:+$TO_STAGE
+}$UNTRACKED"
+
+if [ -n "$TO_STAGE" ]; then
+    echo "$TO_STAGE" | xargs git add
+    echo "Auto-staged generated files:"
+    echo "$TO_STAGE"
 fi
-
-echo "All exports are committed"
