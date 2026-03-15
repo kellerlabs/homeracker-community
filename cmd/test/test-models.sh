@@ -13,6 +13,18 @@ source "${SCRIPT_DIR}/../lib/common.sh"
 
 cd "${SCRIPT_DIR}/../.."
 
+# Verify scadm dependencies are installed
+if [ ! -d "bin/openscad/libraries" ]; then
+    log_error "OpenSCAD libraries not found."
+    echo ""
+    echo "Run the following to install dependencies:"
+    echo "  pip install scadm"
+    echo "  scadm install"
+    echo ""
+    echo "See CONTRIBUTING.md for full setup instructions."
+    exit 1
+fi
+
 MODELS=()
 
 while IFS= read -r -d '' model; do
