@@ -1,5 +1,7 @@
 # Patch Panel
 
+![Preview](preview.png)
+
 A parametric keystone patch panel for the HomeRacker system. Holds standard keystone jacks in a configurable grid with optional lock pin ears on each edge for mounting to HomeRacker frames.
 
 ## Design
