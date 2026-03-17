@@ -1,6 +1,6 @@
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
 import { OrbitControls, Grid, GizmoHelper, GizmoViewport, useGLTF } from "@react-three/drei";
-import { useCallback, useRef, useState, useEffect, useMemo, Suspense } from "react";
+import { useCallback, useRef, useState, useEffect, useMemo, Suspense, useSyncExternalStore } from "react";
 import * as THREE from "three";
 import { BASE_UNIT, PART_COLORS, GRID_EXTENT } from "../constants";
 import type { PlacedPart, InteractionMode, GridPosition, Rotation3, RotationStep, Axis, DragState, ClipboardData } from "../types";
@@ -10,8 +10,10 @@ import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js
 import { AssemblyState } from "../assembly/AssemblyState";
 import { nextOrientation, orientationToRotation, transformCell, rotateGridCells, computeGroundLift } from "../assembly/grid-utils";
 import { findBestSnap, findBestConnectorSnap, type GridRay } from "../assembly/snap";
-import { detectCollidingPartIds, detectCollidingPartIdsMesh } from "../assembly/collision";
-import { registerPartGeometry, hasRegisteredGeometry } from "../assembly/geometry-registry";
+import { detectCollidingPartIds, detectCollidingPartIdsMesh, type CollisionResult } from "../assembly/collision";
+import { registerPartGeometry, hasRegisteredGeometry, getRegistryVersion, subscribeRegistry } from "../assembly/geometry-registry";
+import { createIntersectionHighlightMaterial, updateIntersectionAABBs } from "../shaders/intersection-highlight";
+import { patchPBRWithIntersection } from "../shaders/patch-pbr-intersection";
 
 /**
  * Create a MeshStandardMaterial with a custom color, preserving surface detail
@@ -103,6 +105,7 @@ function PartMesh({
   isPlacing,
   isFlashing,
   isColliding,
+  collisionBoxes,
   onPointerDown,
 }: {
   part: PlacedPart;
@@ -111,18 +114,19 @@ function PartMesh({
   isPlacing: boolean;
   isFlashing: boolean;
   isColliding: boolean;
+  collisionBoxes?: THREE.Box3[];
   onPointerDown: (e: any) => void;
 }) {
   const def = getPartDefinition(part.definitionId);
   if (!def) return null;
 
   if (isCustomPart(part.definitionId)) {
-    return <CustomPartMesh part={part} isSelected={isSelected} isDragging={isDragging} isPlacing={isPlacing} isFlashing={isFlashing} isColliding={isColliding} onPointerDown={onPointerDown} />;
+    return <CustomPartMesh part={part} isSelected={isSelected} isDragging={isDragging} isPlacing={isPlacing} isFlashing={isFlashing} isColliding={isColliding} collisionBoxes={collisionBoxes} onPointerDown={onPointerDown} />;
   }
 
   return (
     <Suspense fallback={<PartMeshFallback part={part} isSelected={isSelected} onClick={() => { }} />}>
-      <PartMeshLoaded part={part} isSelected={isSelected} isDragging={isDragging} isPlacing={isPlacing} isFlashing={isFlashing} isColliding={isColliding} onPointerDown={onPointerDown} />
+      <PartMeshLoaded part={part} isSelected={isSelected} isDragging={isDragging} isPlacing={isPlacing} isFlashing={isFlashing} isColliding={isColliding} collisionBoxes={collisionBoxes} onPointerDown={onPointerDown} />
     </Suspense>
   );
 }
@@ -135,6 +139,7 @@ function CustomPartMesh({
   isPlacing,
   isFlashing,
   isColliding,
+  collisionBoxes,
   onPointerDown,
 }: {
   part: PlacedPart;
@@ -143,6 +148,7 @@ function CustomPartMesh({
   isPlacing: boolean;
   isFlashing: boolean;
   isColliding: boolean;
+  collisionBoxes?: THREE.Box3[];
   onPointerDown: (e: any) => void;
 }) {
   const def = getPartDefinition(part.definitionId)!;
@@ -154,26 +160,58 @@ function CustomPartMesh({
   // Compute offset from ROTATED cells so it stays correct after rotation
   const rotatedCells = rotateGridCells(def.gridCells, part.rotation);
   const offset = modelCenterOffset({ gridCells: rotatedCells });
-  const flashRef = useRef<THREE.MeshStandardMaterial>(null);
   const flashStart = useRef(0);
 
+  // Intersection highlight shader material (created once, uniforms updated)
+  const shaderMatRef = useRef<THREE.ShaderMaterial | null>(null);
+  const meshRef = useRef<THREE.Mesh>(null);
+  const standardMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  const hasCollisionBoxes = collisionBoxes && collisionBoxes.length > 0;
+  const useShader = hasCollisionBoxes && !isDragging && !isSelected;
+
+  // Imperatively swap material — avoids unmount/mount issues from conditional rendering
+  useEffect(() => {
+    if (!meshRef.current) return;
+    const categoryColor = part.color ?? PART_COLORS.custom;
+    if (useShader) {
+      if (!shaderMatRef.current) {
+        shaderMatRef.current = createIntersectionHighlightMaterial(categoryColor);
+      }
+      shaderMatRef.current.uniforms.baseColor.value.set(categoryColor);
+      updateIntersectionAABBs(shaderMatRef.current, collisionBoxes!);
+      meshRef.current.material = shaderMatRef.current;
+    } else {
+      // Restore standard material
+      if (standardMatRef.current) {
+        meshRef.current.material = standardMatRef.current;
+      }
+    }
+  }, [useShader, collisionBoxes, part.color, isSelected, isDragging]);
+
   useFrame(({ clock }) => {
-    if (!flashRef.current) return;
+    // Animate highlight pulse on the shader material
+    if (useShader && shaderMatRef.current) {
+      const t = clock.elapsedTime;
+      const pulse = Math.sin(t * 3) * 0.15 + 0.7;
+      shaderMatRef.current.uniforms.highlightIntensity.value = pulse;
+    }
+    // Flash animation (from BOM panel)
+    if (!standardMatRef.current) return;
     if (isFlashing) {
       if (flashStart.current === 0) flashStart.current = clock.elapsedTime;
       const t = clock.elapsedTime - flashStart.current;
-      const pulse = Math.sin(t * 10) * 0.5 + 0.5; // fast oscillation
-      flashRef.current.emissiveIntensity = pulse * 0.8;
-      flashRef.current.emissive = new THREE.Color(0xffffff);
+      const pulse = Math.sin(t * 10) * 0.5 + 0.5;
+      standardMatRef.current.emissiveIntensity = pulse * 0.8;
+      standardMatRef.current.emissive = new THREE.Color(0xffffff);
     } else {
       flashStart.current = 0;
-      flashRef.current.emissiveIntensity = 0;
-      flashRef.current.emissive.setHex(0x000000);
+      standardMatRef.current.emissiveIntensity = 0;
+      standardMatRef.current.emissive.setHex(0x000000);
     }
   });
 
   const categoryColor = part.color ?? PART_COLORS.custom;
-  const color = isSelected ? PART_COLORS.selected : isColliding ? PART_COLORS.collision : categoryColor;
+  const color = isSelected ? PART_COLORS.selected : (isColliding && !hasCollisionBoxes) ? PART_COLORS.collision : categoryColor;
   const opacity = isDragging ? 0.3 : 1;
 
   return (
@@ -188,8 +226,8 @@ function CustomPartMesh({
     >
       <group position={offset}>
         <group rotation={partEuler}>
-          <mesh geometry={geometry}>
-            <meshStandardMaterial ref={flashRef} color={color} roughness={1} metalness={0} transparent={isDragging} opacity={opacity} />
+          <mesh ref={meshRef} geometry={geometry}>
+            <meshStandardMaterial ref={standardMatRef} color={color} roughness={1} metalness={0} transparent={isDragging} opacity={opacity} />
           </mesh>
         </group>
       </group>
@@ -211,6 +249,7 @@ function PartMeshLoaded({
   isPlacing,
   isFlashing,
   isColliding,
+  collisionBoxes,
   onPointerDown,
 }: {
   part: PlacedPart;
@@ -219,6 +258,7 @@ function PartMeshLoaded({
   isPlacing: boolean;
   isFlashing: boolean;
   isColliding: boolean;
+  collisionBoxes?: THREE.Box3[];
   onPointerDown: (e: any) => void;
 }) {
   const def = getPartDefinition(part.definitionId)!;
@@ -244,16 +284,29 @@ function PartMeshLoaded({
 
   // Store original materials so we can restore them on deselect
   const originalMaterials = useRef<WeakMap<THREE.Mesh, THREE.Material>>(new WeakMap());
+  // Track patched materials for intersection highlighting on GLB parts
+  const patchedUniformsRef = useRef<ReturnType<typeof patchPBRWithIntersection>["uniforms"] | null>(null);
+  const hasGlbCollisionBoxes = collisionBoxes && collisionBoxes.length > 0 && !isDragging && !isSelected;
 
   // Apply selection highlight, drag dimming, or custom color (skip while flashing — useFrame handles that)
   useEffect(() => {
     if (!groupRef.current || isFlashing) return;
+    patchedUniformsRef.current = null;
+
+    // Always restore originals first, then apply new state
     groupRef.current.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        // Save original material on first encounter
         if (!originalMaterials.current.has(child)) {
           originalMaterials.current.set(child, child.material);
+        } else {
+          child.material = originalMaterials.current.get(child)!;
         }
+      }
+    });
+
+    // Now apply the current visual state on top of clean originals
+    groupRef.current.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
         const orig = originalMaterials.current.get(child) ?? child.material;
         if (isDragging) {
           if (part.color) {
@@ -276,6 +329,14 @@ function PartMeshLoaded({
             mat.emissiveIntensity = 0.3;
             child.material = mat;
           }
+        } else if (hasGlbCollisionBoxes) {
+          const mat = orig instanceof THREE.MeshStandardMaterial ? orig.clone() : makeColorMaterial(
+            part.color ?? (def.category === "support" ? PART_COLORS.support : def.category === "connector" ? PART_COLORS.connector : PART_COLORS.custom),
+            orig
+          );
+          const { uniforms } = patchPBRWithIntersection(mat, collisionBoxes!);
+          patchedUniformsRef.current = uniforms;
+          child.material = mat;
         } else if (isColliding) {
           child.material = makeColorMaterial(PART_COLORS.collision, orig, {
             emissive: new THREE.Color(PART_COLORS.collision),
@@ -283,19 +344,21 @@ function PartMeshLoaded({
           });
         } else if (part.color) {
           child.material = makeColorMaterial(part.color, orig);
-        } else {
-          // Restore original material
-          const orig = originalMaterials.current.get(child);
-          if (orig) child.material = orig;
         }
+        // else: already restored to original above
       }
     });
-  }, [isSelected, isDragging, isFlashing, isColliding, part.color]);
+  }, [isSelected, isDragging, isFlashing, isColliding, hasGlbCollisionBoxes, collisionBoxes, part.color]);
 
   // Flash animation for "find part" from selection panel
   const flashStart = useRef(0);
   useFrame(({ clock }) => {
     if (!groupRef.current) return;
+    // Animate patched PBR intersection highlight
+    if (patchedUniformsRef.current) {
+      const t = clock.elapsedTime;
+      patchedUniformsRef.current.highlightIntensity.value = Math.sin(t * 3) * 0.15 + 0.7;
+    }
     if (isFlashing) {
       if (flashStart.current === 0) flashStart.current = clock.elapsedTime;
       const t = clock.elapsedTime - flashStart.current;
@@ -995,6 +1058,7 @@ interface SceneProps extends ViewportProps {
   yLift: number;
   boxSelectActive: boolean;
   collidingPartIds: Set<string>;
+  collisionAABBs: Map<string, THREE.Box3[]>;
 }
 
 /** Scene contents — lives inside the Canvas */
@@ -1019,6 +1083,7 @@ function Scene({
   snapEnabled,
   boxSelectActive,
   collidingPartIds,
+  collisionAABBs,
 }: SceneProps) {
   const groundRef = useRef<THREE.Mesh>(null);
 
@@ -1097,6 +1162,7 @@ function Scene({
           isPlacing={mode.type === "place"}
           isFlashing={flashPartId === part.instanceId || flashDefinitionId === part.definitionId}
           isColliding={collidingPartIds.has(part.instanceId)}
+          collisionBoxes={collisionAABBs.get(part.instanceId)}
           onPointerDown={(e) => onPartPointerDown(part.instanceId, e.nativeEvent)}
         />
       ))}
@@ -1146,6 +1212,10 @@ function Scene({
 export function ViewportCanvas(props: ViewportProps) {
   const [computingCollisions, setComputingCollisions] = useState(false);
   const [collidingPartIds, setCollidingPartIds] = useState<Set<string>>(new Set());
+  const [collisionAABBs, setCollisionAABBs] = useState<Map<string, THREE.Box3[]>>(new Map());
+
+  // Re-trigger collision detection when GLB geometries finish loading
+  const registryVersion = useSyncExternalStore(subscribeRegistry, getRegistryVersion);
 
   const [ghostRotation, setGhostRotation] = useState<Rotation3>([0, 0, 0]);
   const [ghostOrientation, setGhostOrientation] = useState<Axis>("y");
@@ -1179,11 +1249,13 @@ export function ViewportCanvas(props: ViewportProps) {
   useEffect(() => {
     if (!props.showCollisions || dragState) {
       setCollidingPartIds(new Set());
+      setCollisionAABBs(new Map());
       return;
     }
     if (!props.fineMeshCollisions) {
       const timer = setTimeout(() => {
         setCollidingPartIds(detectCollidingPartIds(props.assembly));
+        setCollisionAABBs(new Map());
       }, 100);
       return () => clearTimeout(timer);
     }
@@ -1192,7 +1264,8 @@ export function ViewportCanvas(props: ViewportProps) {
       setComputingCollisions(true);
       detectCollidingPartIdsMesh(props.assembly, controller.signal).then((result) => {
         if (!controller.signal.aborted) {
-          setCollidingPartIds(result);
+          setCollidingPartIds(result.collidingIds);
+          setCollisionAABBs(result.customPartCollisionAABBs);
           setComputingCollisions(false);
         }
       });
@@ -1202,7 +1275,7 @@ export function ViewportCanvas(props: ViewportProps) {
       controller.abort();
       setComputingCollisions(false);
     };
-  }, [props.showCollisions, props.fineMeshCollisions, props.parts, dragState]);
+  }, [props.showCollisions, props.fineMeshCollisions, props.parts, dragState, registryVersion]);
 
   // Box-select (marquee) state
   const boxSelectRef = useRef<{ startX: number; startY: number } | null>(null);
@@ -1479,6 +1552,7 @@ export function ViewportCanvas(props: ViewportProps) {
           yLift={yLift}
           boxSelectActive={!!boxSelectRect}
           collidingPartIds={collidingPartIds}
+          collisionAABBs={collisionAABBs}
         />
       </Canvas>
       {boxSelectRect && (

@@ -61,7 +61,7 @@ function modelCenterOffset(gridCells: GridPosition[], orientation: Axis = "y"): 
  *   Custom: group(worldPos) > group(offset) > group(partEuler) > mesh
  *   GLB:    group(worldPos) > group(offset) > group(partEuler) > group(orientEuler) > scene
  */
-function getPartWorldMatrix(part: PlacedPart): THREE.Matrix4 | undefined {
+export function getPartWorldMatrix(part: PlacedPart): THREE.Matrix4 | undefined {
   const def = getPartDefinition(part.definitionId);
   if (!def) return undefined;
 
@@ -174,7 +174,7 @@ function isValidPullThroughPair(partA: PlacedPart, partB: PlacedPart): boolean {
 }
 
 /** Compute world-space AABB for a part */
-function getPartWorldAABB(
+export function getPartWorldAABB(
   part: PlacedPart,
   mat: THREE.Matrix4,
 ): THREE.Box3 | undefined {
@@ -204,10 +204,16 @@ interface PartCollisionData {
  * 3. AABB mid-phase: skip pairs whose world bounding boxes don't overlap
  * 4. BVH narrow phase: actual mesh intersection test (yielded)
  */
+export interface CollisionResult {
+  collidingIds: Set<string>;
+  /** For each colliding part instance, tight world-space AABBs of intersection regions */
+  customPartCollisionAABBs: Map<string, THREE.Box3[]>;
+}
+
 export async function detectCollidingPartIds(
   assembly: AssemblyState,
   signal?: AbortSignal,
-): Promise<Set<string>> {
+): Promise<CollisionResult> {
   // Broad phase: collect candidate pairs from grid occupancy
   const candidatePairs = new Set<string>();
   for (const [, ids] of assembly.gridOccupancy) {
@@ -221,7 +227,7 @@ export async function detectCollidingPartIds(
   }
 
   console.log("[MeshCollision] candidate pairs:", candidatePairs.size);
-  if (candidatePairs.size === 0) return new Set();
+  if (candidatePairs.size === 0) return { collidingIds: new Set(), customPartCollisionAABBs: new Map() };
 
   // Pre-compute per-part data (matrix, inverse, AABB) on demand
   const partDataCache = new Map<string, PartCollisionData | null>();
@@ -241,12 +247,14 @@ export async function detectCollidingPartIds(
   }
 
   const collidingIds = new Set<string>();
+  const customPartCollisionAABBs = new Map<string, THREE.Box3[]>();
+  const addedCellsPerPart = new Map<string, Set<string>>();
   const pairs = Array.from(candidatePairs);
   const BATCH_SIZE = 10;
   let ptSkipped = 0, aabbSkipped = 0, bvhTested = 0, bvhHit = 0, noGeoSkipped = 0;
 
   for (let batch = 0; batch < pairs.length; batch += BATCH_SIZE) {
-    if (signal?.aborted) return new Set();
+    if (signal?.aborted) return { collidingIds: new Set(), customPartCollisionAABBs: new Map() };
 
     const end = Math.min(batch + BATCH_SIZE, pairs.length);
     for (let k = batch; k < end; k++) {
@@ -300,6 +308,38 @@ export async function detectCollidingPartIds(
         bvhHit++;
         collidingIds.add(idA);
         collidingIds.add(idB);
+        // Find shared grid cells and create cell-sized AABBs for precise
+        // intersection region highlighting (15mm cubes where both parts overlap)
+        const cellsA = new Set<string>();
+        const cellsB = new Set<string>();
+        for (const [key, ids] of assembly.gridOccupancy) {
+          if (ids.includes(idA)) cellsA.add(key);
+          if (ids.includes(idB)) cellsB.add(key);
+        }
+        for (const key of cellsA) {
+          if (cellsB.has(key)) {
+            // Track which cells we've already added per part to avoid duplicates
+            if (!addedCellsPerPart.has(idA)) addedCellsPerPart.set(idA, new Set());
+            if (!addedCellsPerPart.has(idB)) addedCellsPerPart.set(idB, new Set());
+            const [cx, cy, cz] = key.split(",").map(Number);
+            const cellBox = () => new THREE.Box3(
+              new THREE.Vector3(cx * BASE_UNIT, cy * BASE_UNIT, cz * BASE_UNIT),
+              new THREE.Vector3((cx + 1) * BASE_UNIT, (cy + 1) * BASE_UNIT, (cz + 1) * BASE_UNIT),
+            );
+            if (!addedCellsPerPart.get(idA)!.has(key)) {
+              addedCellsPerPart.get(idA)!.add(key);
+              const arr = customPartCollisionAABBs.get(idA) || [];
+              arr.push(cellBox());
+              customPartCollisionAABBs.set(idA, arr);
+            }
+            if (!addedCellsPerPart.get(idB)!.has(key)) {
+              addedCellsPerPart.get(idB)!.add(key);
+              const arr = customPartCollisionAABBs.get(idB) || [];
+              arr.push(cellBox());
+              customPartCollisionAABBs.set(idB, arr);
+            }
+          }
+        }
       }
     }
 
@@ -310,5 +350,5 @@ export async function detectCollidingPartIds(
   }
 
   console.log(`[MeshCollision] ptSkipped=${ptSkipped} aabbSkipped=${aabbSkipped} noGeo=${noGeoSkipped} bvhTested=${bvhTested} bvhHit=${bvhHit} colliding=${collidingIds.size}`);
-  return collidingIds;
+  return { collidingIds, customPartCollisionAABBs };
 }
