@@ -15,11 +15,13 @@ interface BOMPanelProps {
 }
 
 function exportCSV(entries: BOMEntry[], inventory: Record<string, number>) {
-  const header = "Part,Category,Quantity,Have,Need";
+  const header = "Part,Category,Quantity,Have,Need,Excess";
   const rows = entries.map((e) => {
     const have = inventory[e.definitionId] || 0;
-    const need = Math.max(0, e.quantity - have);
-    return `"${e.name}","${e.category}",${e.quantity},${have},${need}`;
+    const diff = e.quantity - have;
+    const need = Math.max(0, diff);
+    const excess = Math.max(0, -diff);
+    return `"${e.name}","${e.category}",${e.quantity},${have},${need},${excess}`;
   });
   const csv = [header, ...rows].join("\n");
   const blob = new Blob([csv], { type: "text/csv" });
@@ -44,6 +46,9 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlash
 
   const totalNeed = showInventory
     ? entries.reduce((sum, e) => sum + Math.max(0, e.quantity - (inventory[e.definitionId] || 0)), 0)
+    : 0;
+  const totalExcess = showInventory
+    ? entries.reduce((sum, e) => sum + Math.max(0, (inventory[e.definitionId] || 0) - e.quantity), 0)
     : 0;
 
   const handleInventoryChange = (definitionId: string, value: string) => {
@@ -95,12 +100,15 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlash
                 <th>Qty</th>
                 {showInventory && <th>Have</th>}
                 {showInventory && <th>Need</th>}
+                {showInventory && <th>Extra</th>}
               </tr>
             </thead>
             <tbody>
               {entries.map((entry) => {
                 const have = inventory[entry.definitionId] || 0;
-                const need = Math.max(0, entry.quantity - have);
+                const diff = entry.quantity - have;
+                const need = Math.max(0, diff);
+                const excess = Math.max(0, -diff);
                 return (
                   <tr
                     key={entry.definitionId}
@@ -127,6 +135,11 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlash
                         {need}
                       </td>
                     )}
+                    {showInventory && (
+                      <td className={`bom-excess${excess > 0 ? " bom-excess-has" : ""}`}>
+                        {excess > 0 ? `+${excess}` : ""}
+                      </td>
+                    )}
                   </tr>
                 );
               })}
@@ -135,6 +148,7 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlash
           <div className="bom-total">
             Total: {totalParts} parts
             {showInventory && <span className="bom-total-need"> | Need: {totalNeed}</span>}
+            {showInventory && totalExcess > 0 && <span className="bom-total-excess"> | Extra: +{totalExcess}</span>}
           </div>
         </>
       )}

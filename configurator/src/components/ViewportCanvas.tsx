@@ -1399,7 +1399,7 @@ export function ViewportCanvas(props: ViewportProps) {
         }
       } else if (props.mode.type === "select" && props.selectedPartIds.size > 0) {
         // Arrow key nudge and W/S lift for selected parts
-        const fine = e.shiftKey ? 0.1 : 1;
+        const fine = e.shiftKey ? 0.05 : 1;
         switch (e.key) {
           case "ArrowLeft": e.preventDefault(); props.onNudgeParts(-fine, 0, 0); break;
           case "ArrowRight": e.preventDefault(); props.onNudgeParts(fine, 0, 0); break;

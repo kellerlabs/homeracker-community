@@ -479,7 +479,7 @@
   }
 
   .bom-panel-wide {
-    width: 380px;
+    width: 420px;
   }
 
   .bom-header {
@@ -524,7 +524,7 @@
 
   .bom-table th {
     text-align: left;
-    padding: 8px 16px;
+    padding: 6px 8px;
     font-weight: 600;
     color: var(--text-secondary);
     font-size: 11px;
@@ -534,7 +534,7 @@
   }
 
   .bom-table td {
-    padding: 8px 16px;
+    padding: 6px 8px;
     border-bottom: 1px solid var(--border);
   }
 
@@ -578,11 +578,11 @@
   }
 
   .bom-inventory-cell {
-    padding: 4px 8px;
+    padding: 4px 6px;
   }
 
   .bom-inventory-input {
-    width: 48px;
+    width: 40px;
     background: var(--bg-primary);
     border: 1px solid var(--border);
     border-radius: 4px;
@@ -619,6 +619,20 @@
 
   .bom-total-need {
     color: #f59e0b;
+  }
+
+  .bom-excess {
+    text-align: right;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .bom-excess-has {
+    color: #38bdf8;
+  }
+
+  .bom-total-excess {
+    color: #38bdf8;
   }
 
   .bom-total {
