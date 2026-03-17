@@ -120,4 +120,6 @@ export interface AssemblyFile {
   }>;
   /** Embedded custom part binaries for portability */
   customParts?: EmbeddedCustomPart[];
+  /** User inventory: definitionId → quantity owned */
+  inventory?: Record<string, number>;
 }

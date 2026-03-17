@@ -475,6 +475,11 @@
     border-left: 1px solid var(--border);
     overflow-y: auto;
     flex-shrink: 0;
+    transition: width 0.2s ease;
+  }
+
+  .bom-panel-wide {
+    width: 380px;
   }
 
   .bom-header {
@@ -537,6 +542,83 @@
     text-align: right;
     font-weight: 600;
     color: var(--accent);
+  }
+
+  .bom-row-clickable {
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .bom-row-clickable:hover {
+    background: var(--bg-tertiary);
+  }
+
+  .bom-header-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .bom-inventory-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  .bom-inventory-btn:hover {
+    background: var(--accent-blue);
+  }
+
+  .bom-inventory-btn.active {
+    background: var(--accent-blue);
+    border-color: var(--accent);
+  }
+
+  .bom-inventory-cell {
+    padding: 4px 8px;
+  }
+
+  .bom-inventory-input {
+    width: 48px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 12px;
+    color: var(--text-primary);
+    text-align: right;
+    outline: none;
+    -moz-appearance: textfield;
+  }
+
+  .bom-inventory-input::-webkit-inner-spin-button,
+  .bom-inventory-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .bom-inventory-input:focus {
+    border-color: var(--accent);
+  }
+
+  .bom-need {
+    text-align: right;
+    font-weight: 600;
+  }
+
+  .bom-need-remaining {
+    color: #f59e0b;
+  }
+
+  .bom-need-done {
+    color: #22c55e;
+  }
+
+  .bom-total-need {
+    color: #f59e0b;
   }
 
   .bom-total {

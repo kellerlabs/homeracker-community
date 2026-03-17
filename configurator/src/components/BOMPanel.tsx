@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { BOMEntry, PlacedPart } from "../types";
 import { getPartDefinition } from "../data/catalog";
 import { ColorPicker } from "./ColorPicker";
@@ -7,14 +8,19 @@ interface BOMPanelProps {
   selectedPartIds: Set<string>;
   parts: PlacedPart[];
   onFlashPart: (instanceId: string) => void;
+  onFlashDefinition: (definitionId: string) => void;
   onSetColor: (color: string | undefined) => void;
+  inventory: Record<string, number>;
+  onSetInventory: (inventory: Record<string, number>) => void;
 }
 
-function exportCSV(entries: BOMEntry[]) {
-  const header = "Part,Category,Quantity";
-  const rows = entries.map(
-    (e) => `"${e.name}","${e.category}",${e.quantity}`
-  );
+function exportCSV(entries: BOMEntry[], inventory: Record<string, number>) {
+  const header = "Part,Category,Quantity,Have,Need";
+  const rows = entries.map((e) => {
+    const have = inventory[e.definitionId] || 0;
+    const need = Math.max(0, e.quantity - have);
+    return `"${e.name}","${e.category}",${e.quantity},${have},${need}`;
+  });
   const csv = [header, ...rows].join("\n");
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
@@ -25,8 +31,9 @@ function exportCSV(entries: BOMEntry[]) {
   URL.revokeObjectURL(url);
 }
 
-export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onSetColor }: BOMPanelProps) {
+export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlashDefinition, onSetColor, inventory, onSetInventory }: BOMPanelProps) {
   const totalParts = entries.reduce((sum, e) => sum + e.quantity, 0);
+  const [showInventory, setShowInventory] = useState(false);
 
   const selectedParts = parts.filter((p) => selectedPartIds.has(p.instanceId));
 
@@ -35,18 +42,42 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onSetCo
     ? (selectedParts.every((p) => p.color === selectedParts[0].color) ? (selectedParts[0].color ?? null) : null)
     : null;
 
+  const totalNeed = showInventory
+    ? entries.reduce((sum, e) => sum + Math.max(0, e.quantity - (inventory[e.definitionId] || 0)), 0)
+    : 0;
+
+  const handleInventoryChange = (definitionId: string, value: string) => {
+    const num = parseInt(value, 10);
+    const next = { ...inventory };
+    if (isNaN(num) || num <= 0) {
+      delete next[definitionId];
+    } else {
+      next[definitionId] = num;
+    }
+    onSetInventory(next);
+  };
+
   return (
-    <div className="bom-panel">
+    <div className={`bom-panel${showInventory ? " bom-panel-wide" : ""}`}>
       <div className="bom-header">
         <h2>Bill of Materials</h2>
         {entries.length > 0 && (
-          <button
-            className="bom-export-btn"
-            onClick={() => exportCSV(entries)}
-            title="Export as CSV"
-          >
-            Export CSV
-          </button>
+          <div className="bom-header-actions">
+            <button
+              className={`bom-inventory-btn${showInventory ? " active" : ""}`}
+              onClick={() => setShowInventory(!showInventory)}
+              title={showInventory ? "Hide inventory" : "Show inventory"}
+            >
+              Inventory
+            </button>
+            <button
+              className="bom-export-btn"
+              onClick={() => exportCSV(entries, inventory)}
+              title="Export as CSV"
+            >
+              Export CSV
+            </button>
+          </div>
         )}
       </div>
 
@@ -62,18 +93,49 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onSetCo
               <tr>
                 <th>Part</th>
                 <th>Qty</th>
+                {showInventory && <th>Have</th>}
+                {showInventory && <th>Need</th>}
               </tr>
             </thead>
             <tbody>
-              {entries.map((entry) => (
-                <tr key={entry.definitionId}>
-                  <td>{entry.name}</td>
-                  <td className="bom-qty">{entry.quantity}</td>
-                </tr>
-              ))}
+              {entries.map((entry) => {
+                const have = inventory[entry.definitionId] || 0;
+                const need = Math.max(0, entry.quantity - have);
+                return (
+                  <tr
+                    key={entry.definitionId}
+                    className="bom-row-clickable"
+                    onClick={() => onFlashDefinition(entry.definitionId)}
+                    title="Click to highlight in model"
+                  >
+                    <td>{entry.name}</td>
+                    <td className="bom-qty">{entry.quantity}</td>
+                    {showInventory && (
+                      <td className="bom-inventory-cell" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="number"
+                          min="0"
+                          className="bom-inventory-input"
+                          value={have || ""}
+                          placeholder="0"
+                          onChange={(e) => handleInventoryChange(entry.definitionId, e.target.value)}
+                        />
+                      </td>
+                    )}
+                    {showInventory && (
+                      <td className={`bom-need${need > 0 ? " bom-need-remaining" : " bom-need-done"}`}>
+                        {need}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
-          <div className="bom-total">Total: {totalParts} parts</div>
+          <div className="bom-total">
+            Total: {totalParts} parts
+            {showInventory && <span className="bom-total-need"> | Need: {totalNeed}</span>}
+          </div>
         </>
       )}
 

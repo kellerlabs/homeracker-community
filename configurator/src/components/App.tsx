@@ -17,6 +17,7 @@ const assembly = new AssemblyState();
 const history = new HistoryManager();
 
 const STORAGE_KEY = "homeracker-scene";
+const INVENTORY_STORAGE_KEY = "homeracker-inventory";
 
 // Restore custom parts (IndexedDB) THEN assembly (localStorage or URL hash).
 // Custom part definitions must exist before deserialize() resolves their IDs.
@@ -62,15 +63,36 @@ export function App() {
   const [mode, setMode] = useState<InteractionMode>({ type: "select" });
   const [selectedPartIds, setSelectedPartIds] = useState<Set<string>>(new Set());
   const [flashPartId, setFlashPartId] = useState<string | null>(null);
+  const [flashDefinitionId, setFlashDefinitionId] = useState<string | null>(null);
+  const [inventory, setInventory] = useState<Record<string, number>>({});
 
   const handleFlashPart = useCallback((instanceId: string) => {
     setFlashPartId(instanceId);
     setTimeout(() => setFlashPartId(null), 600);
   }, []);
 
+  const handleFlashDefinition = useCallback((definitionId: string) => {
+    setFlashDefinitionId(definitionId);
+    setTimeout(() => setFlashDefinitionId(null), 600);
+  }, []);
+
+  const handleSetInventory = useCallback((newInventory: Record<string, number>) => {
+    setInventory(newInventory);
+    try {
+      localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(newInventory));
+    } catch { /* ignore quota errors */ }
+  }, []);
+
   // Wait for custom parts + assembly restore before rendering
   useEffect(() => {
-    initPromise.then(() => setReady(true));
+    initPromise.then(() => {
+      // Restore inventory from localStorage
+      try {
+        const saved = localStorage.getItem(INVENTORY_STORAGE_KEY);
+        if (saved) setInventory(JSON.parse(saved));
+      } catch { /* ignore */ }
+      setReady(true);
+    });
   }, []);
 
   // Subscribe to assembly changes for re-renders
@@ -417,6 +439,11 @@ export function App() {
     if (embedded.length > 0) {
       data.customParts = embedded;
     }
+    // Include inventory if any values are set
+    const hasInventory = Object.values(inventory).some((v) => v > 0);
+    if (hasInventory) {
+      data.inventory = inventory;
+    }
     const blob = new Blob([JSON.stringify(data, null, 2)], {
       type: "application/json",
     });
@@ -426,7 +453,7 @@ export function App() {
     a.download = `${data.name.replace(/\s+/g, "-").toLowerCase()}.homeracker.json`;
     a.click();
     URL.revokeObjectURL(url);
-  }, []);
+  }, [inventory]);
 
   const handleLoad = useCallback(() => {
     const input = document.createElement("input");
@@ -445,12 +472,18 @@ export function App() {
         assembly.deserialize(data);
         history.clear();
         setSelectedPartIds(new Set());
+        // Restore inventory from loaded file
+        if (data.inventory && typeof data.inventory === "object") {
+          handleSetInventory(data.inventory);
+        } else {
+          handleSetInventory({});
+        }
       } catch (e) {
         console.error("Failed to load assembly:", e);
       }
     };
     input.click();
-  }, []);
+  }, [handleSetInventory]);
 
   const handleToggleSnap = useCallback(() => {
     assembly.setSnapEnabled(!assembly.snapEnabled);
@@ -606,12 +639,13 @@ export function App() {
           onPasteParts={handlePasteParts}
           onEscape={handleEscape}
           flashPartId={flashPartId}
+          flashDefinitionId={flashDefinitionId}
           snapEnabled={snapshot.snapEnabled}
           showCollisions={snapshot.showCollisions}
           fineMeshCollisions={snapshot.fineMeshCollisions}
         />
       </div>
-      <BOMPanel entries={bom} selectedPartIds={selectedPartIds} parts={snapshot.parts} onFlashPart={handleFlashPart} onSetColor={handleSetColor} />
+      <BOMPanel entries={bom} selectedPartIds={selectedPartIds} parts={snapshot.parts} onFlashPart={handleFlashPart} onFlashDefinition={handleFlashDefinition} onSetColor={handleSetColor} inventory={inventory} onSetInventory={handleSetInventory} />
       {toast && <div className="toast">{toast}</div>}
     </div>
   );

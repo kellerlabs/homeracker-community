@@ -47,6 +47,7 @@ interface ViewportProps {
   onNudgeParts: (dx: number, dy: number, dz: number) => void;
   onEscape: () => void;
   flashPartId: string | null;
+  flashDefinitionId: string | null;
   snapEnabled: boolean;
   showCollisions: boolean;
   fineMeshCollisions: boolean;
@@ -167,6 +168,7 @@ function CustomPartMesh({
     } else {
       flashStart.current = 0;
       flashRef.current.emissiveIntensity = 0;
+      flashRef.current.emissive.setHex(0x000000);
     }
   });
 
@@ -306,7 +308,7 @@ function PartMeshLoaded({
       });
     } else if (flashStart.current !== 0) {
       flashStart.current = 0;
-      // Restore after flash: if custom color is set, re-apply it; otherwise restore original
+      // Restore after flash: reset emissive and re-apply color or original material
       groupRef.current.traverse((child) => {
         if (child instanceof THREE.Mesh) {
           if (part.color) {
@@ -314,7 +316,13 @@ function PartMeshLoaded({
             child.material = makeColorMaterial(part.color, orig);
           } else {
             const orig = originalMaterials.current.get(child);
-            if (orig) child.material = orig;
+            if (orig) {
+              child.material = orig;
+              if ((orig as THREE.MeshStandardMaterial).emissive) {
+                (orig as THREE.MeshStandardMaterial).emissive.setHex(0x000000);
+                (orig as THREE.MeshStandardMaterial).emissiveIntensity = 0;
+              }
+            }
           }
         }
       });
@@ -1007,6 +1015,7 @@ function Scene({
   onPartPointerDown,
   yLift,
   flashPartId,
+  flashDefinitionId,
   snapEnabled,
   boxSelectActive,
   collidingPartIds,
@@ -1086,7 +1095,7 @@ function Scene({
           isSelected={selectedPartIds.has(part.instanceId)}
           isDragging={dragState?.instanceId === part.instanceId}
           isPlacing={mode.type === "place"}
-          isFlashing={flashPartId === part.instanceId}
+          isFlashing={flashPartId === part.instanceId || flashDefinitionId === part.definitionId}
           isColliding={collidingPartIds.has(part.instanceId)}
           onPointerDown={(e) => onPartPointerDown(part.instanceId, e.nativeEvent)}
         />
