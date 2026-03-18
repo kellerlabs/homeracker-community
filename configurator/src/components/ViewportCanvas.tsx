@@ -12,7 +12,6 @@ import { nextOrientation, orientationToRotation, transformCell, rotateGridCells,
 import { findBestSnap, findBestConnectorSnap, type GridRay } from "../assembly/snap";
 import { detectCollidingPartIds, detectCollidingPartIdsMesh, type CollisionResult } from "../assembly/collision";
 import { registerPartGeometry, hasRegisteredGeometry, getRegistryVersion, subscribeRegistry } from "../assembly/geometry-registry";
-import { createIntersectionHighlightMaterial, updateIntersectionAABBs } from "../shaders/intersection-highlight";
 import { patchPBRWithIntersection } from "../shaders/patch-pbr-intersection";
 
 /**
@@ -162,51 +161,51 @@ function CustomPartMesh({
   const offset = modelCenterOffset({ gridCells: rotatedCells });
   const flashStart = useRef(0);
 
-  // Intersection highlight shader material (created once, uniforms updated)
-  const shaderMatRef = useRef<THREE.ShaderMaterial | null>(null);
   const meshRef = useRef<THREE.Mesh>(null);
   const standardMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  const patchedMatRef = useRef<THREE.MeshStandardMaterial | null>(null);
+  const patchedUniformsRef = useRef<ReturnType<typeof patchPBRWithIntersection>["uniforms"] | null>(null);
   const hasCollisionBoxes = collisionBoxes && collisionBoxes.length > 0;
-  const useShader = hasCollisionBoxes && !isDragging && !isSelected;
+  const useHighlight = hasCollisionBoxes && !isDragging && !isSelected;
 
   // Imperatively swap material — avoids unmount/mount issues from conditional rendering
   useEffect(() => {
-    if (!meshRef.current) return;
-    const categoryColor = part.color ?? PART_COLORS.custom;
-    if (useShader) {
-      if (!shaderMatRef.current) {
-        shaderMatRef.current = createIntersectionHighlightMaterial(categoryColor);
-      }
-      shaderMatRef.current.uniforms.baseColor.value.set(categoryColor);
-      updateIntersectionAABBs(shaderMatRef.current, collisionBoxes!);
-      meshRef.current.material = shaderMatRef.current;
+    if (!meshRef.current || !standardMatRef.current) return;
+    if (useHighlight) {
+      // Clone the standard material and patch it with intersection AABB test
+      const mat = standardMatRef.current.clone();
+      const { uniforms } = patchPBRWithIntersection(mat, collisionBoxes!);
+      patchedMatRef.current = mat;
+      patchedUniformsRef.current = uniforms;
+      meshRef.current.material = mat;
     } else {
       // Restore standard material
-      if (standardMatRef.current) {
-        meshRef.current.material = standardMatRef.current;
-      }
+      patchedMatRef.current = null;
+      patchedUniformsRef.current = null;
+      meshRef.current.material = standardMatRef.current;
     }
-  }, [useShader, collisionBoxes, part.color, isSelected, isDragging]);
+  }, [useHighlight, collisionBoxes, part.color, isSelected, isDragging]);
 
   useFrame(({ clock }) => {
-    // Animate highlight pulse on the shader material
-    if (useShader && shaderMatRef.current) {
+    // Animate highlight pulse
+    if (patchedUniformsRef.current) {
       const t = clock.elapsedTime;
-      const pulse = Math.sin(t * 3) * 0.15 + 0.7;
-      shaderMatRef.current.uniforms.highlightIntensity.value = pulse;
+      patchedUniformsRef.current.highlightIntensity.value = Math.sin(t * 3) * 0.15 + 0.7;
     }
     // Flash animation (from BOM panel)
     if (!standardMatRef.current) return;
+    // Target whichever material is currently active
+    const activeMat = patchedMatRef.current ?? standardMatRef.current;
     if (isFlashing) {
       if (flashStart.current === 0) flashStart.current = clock.elapsedTime;
       const t = clock.elapsedTime - flashStart.current;
       const pulse = Math.sin(t * 10) * 0.5 + 0.5;
-      standardMatRef.current.emissiveIntensity = pulse * 0.8;
-      standardMatRef.current.emissive = new THREE.Color(0xffffff);
+      activeMat.emissiveIntensity = pulse * 0.8;
+      activeMat.emissive = new THREE.Color(0xffffff);
     } else {
       flashStart.current = 0;
-      standardMatRef.current.emissiveIntensity = 0;
-      standardMatRef.current.emissive.setHex(0x000000);
+      activeMat.emissiveIntensity = 0;
+      activeMat.emissive.setHex(0x000000);
     }
   });
 
