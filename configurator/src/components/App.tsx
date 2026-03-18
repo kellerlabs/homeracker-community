@@ -603,7 +603,7 @@ export function App() {
 
   return (
     <div className="app">
-      <Sidebar onSelectPart={handleSelectPart} activeMode={mode} />
+      <Sidebar onSelectPart={handleSelectPart} activeMode={mode} usedDefinitionIds={new Set(snapshot.parts.map((p) => p.definitionId))} />
       <div className="main-area">
         <Toolbar
           onUndo={handleUndo}
