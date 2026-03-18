@@ -48,7 +48,7 @@ jobs:
             --standalone
             --metadata title="HomeRacker Community"
             --css https://cdn.jsdelivr.net/npm/water.css@2/out/dark.min.css
-            -o _site/index.html
+            -o configurator/_site/index.html
             README.md
 
       - uses: actions/configure-pages@v5
