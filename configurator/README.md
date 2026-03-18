@@ -1,6 +1,6 @@
 # HomeRacker Configurator
 
-## **[Launch the Configurator](https://zachgoldberg.github.io/homeracker-configurator/)**
+## **[Launch the Configurator](https://kellerlabs.github.io/homeracker-community/configurator/)**
 
 A 3D visual planner for [HomeRacker](https://github.com/kellerlabs/homeracker) — the fully modular, 3D-printable rack-building system. Design your rack layout in the browser before printing.
 
@@ -119,7 +119,7 @@ Open http://localhost:5173 in your browser.
 - [Bun](https://bun.sh/) for bundling, dev server, and runtime
 - [Playwright](https://playwright.dev/) for e2e tests
 - [OpenSCAD](https://openscad.org/) + [trimesh](https://trimesh.org/) for generating GLB models from parametric sources
-- Deployed to [GitHub Pages](https://zachgoldberg.github.io/homeracker-configurator/) via GitHub Actions
+- Deployed to [GitHub Pages](https://kellerlabs.github.io/homeracker-community/configurator/) via GitHub Actions
 - Zero external runtime dependencies beyond React and Three.js — no UI framework, no state library, no build tool chain
 
 ## Scripts
