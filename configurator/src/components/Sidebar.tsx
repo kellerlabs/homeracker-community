@@ -1,13 +1,14 @@
 import { useState, useSyncExternalStore, useCallback } from "react";
 import { PART_CATALOG } from "../data/catalog";
 import { PART_COLORS } from "../constants";
-import { subscribeCustomParts, getCustomPartsSnapshot, importModelFile, deleteCustomPart, downloadCustomPart } from "../data/custom-parts";
+import { subscribeCustomParts, getCustomPartsSnapshot, importModelFile, deleteCustomPart, deleteUnusedCustomParts, downloadCustomPart, replaceCustomPart } from "../data/custom-parts";
 import { useThumbnail } from "../thumbnails/useThumbnail";
 import type { InteractionMode, PartCategory, PartDefinition } from "../types";
 
 interface SidebarProps {
   onSelectPart: (definitionId: string) => void;
   activeMode: InteractionMode;
+  usedDefinitionIds: Set<string>;
 }
 
 const SECTIONS: { key: string; label: string; filter: (p: PartDefinition) => boolean }[] = [
@@ -57,7 +58,7 @@ function PartButton({ part, isActive, onSelect }: { part: PartDefinition; isActi
   );
 }
 
-export function Sidebar({ onSelectPart, activeMode }: SidebarProps) {
+export function Sidebar({ onSelectPart, activeMode, usedDefinitionIds }: SidebarProps) {
   const activePlaceId =
     activeMode.type === "place" ? activeMode.definitionId : null;
 
@@ -285,6 +286,26 @@ export function Sidebar({ onSelectPart, activeMode }: SidebarProps) {
                           &#8595;
                         </button>
                         <button
+                          className="catalog-item-replace"
+                          title={`Replace ${part.name} with a new file`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const input = document.createElement("input");
+                            input.type = "file";
+                            input.accept = ".stl,.3mf";
+                            input.onchange = async () => {
+                              const file = input.files?.[0];
+                              if (file) {
+                                try { await replaceCustomPart(part.id, file); }
+                                catch (err) { console.error("Replace failed:", err); }
+                              }
+                            };
+                            input.click();
+                          }}
+                        >
+                          &#8635;
+                        </button>
+                        <button
                           className="catalog-item-delete"
                           title={`Remove ${part.name}`}
                           onClick={(e) => {
@@ -298,9 +319,20 @@ export function Sidebar({ onSelectPart, activeMode }: SidebarProps) {
                     ))}
                   </div>
                 )}
-                <button className="catalog-import-btn" onClick={handleImportModel}>
-                  Import Model
-                </button>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <button className="catalog-import-btn" onClick={handleImportModel}>
+                    Import Model
+                  </button>
+                  {customParts.some((p) => !usedDefinitionIds.has(p.id)) && (
+                    <button
+                      className="catalog-import-btn"
+                      title="Remove custom models not placed in the assembly"
+                      onClick={() => deleteUnusedCustomParts(usedDefinitionIds)}
+                    >
+                      Remove Unused
+                    </button>
+                  )}
+                </div>
               </>
             )}
           </div>
