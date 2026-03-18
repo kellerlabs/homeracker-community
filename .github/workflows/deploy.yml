@@ -37,9 +37,18 @@ jobs:
       - run: bun run build
 
       # Nest dist inside configurator/ so the site is served at /homeracker-community/configurator/
+      # Root index.html is a rendered version of the repo README
       - run: |
           mkdir -p _site/configurator
           cp -r dist/* _site/configurator/
+      - uses: docker://pandoc/core:latest
+        with:
+          args: >-
+            --standalone
+            --metadata title="HomeRacker Community"
+            --css https://cdn.jsdelivr.net/npm/water.css@2/out/dark.min.css
+            -o _site/index.html
+            README.md
 
       - uses: actions/configure-pages@v5
 
