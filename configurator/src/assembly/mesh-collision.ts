@@ -276,12 +276,21 @@ export async function detectCollidingPartIds(
 
       if (isValidPullThroughPair(dataA.part, dataB.part)) { ptSkipped++; continue; }
 
-      // Shrink AABBs by a small tolerance to avoid false positives from
-      // parts that merely touch at a shared boundary (e.g. adjacent connector + support)
+      // Check AABB overlap with minimum penetration depth BEFORE expensive BVH test.
+      // Adjacent parts that merely touch have paper-thin overlaps (<2mm on one axis).
       const AABB_TOLERANCE = 0.75; // mm
       const shrunkA = dataA.aabb.clone().expandByScalar(-AABB_TOLERANCE);
       const shrunkB = dataB.aabb.clone().expandByScalar(-AABB_TOLERANCE);
       if (!shrunkA.intersectsBox(shrunkB)) { aabbSkipped++; continue; }
+
+      const overlapBounds = dataA.aabb.clone().intersect(dataB.aabb);
+      if (overlapBounds.isEmpty()) { aabbSkipped++; continue; }
+      const overlapSize = overlapBounds.getSize(new THREE.Vector3());
+      const MIN_PENETRATION = 2.0; // mm
+      if (Math.min(overlapSize.x, overlapSize.y, overlapSize.z) < MIN_PENETRATION) {
+        aabbSkipped++;
+        continue;
+      }
 
       // Ensure both geometries have BVH for fast dual-tree traversal
       ensureBVH(dataA.part.definitionId);
@@ -290,43 +299,21 @@ export async function detectCollidingPartIds(
       if (!bvhB || !geoA) { noGeoSkipped++; continue; }
 
       bvhTested++;
-      const trisA = geoA.index ? geoA.index.count / 3 : geoA.attributes.position.count / 3;
       const geoB = getGeometryForPart(dataB.part.definitionId);
-      const trisB = geoB ? (geoB.index ? geoB.index.count / 3 : geoB.attributes.position.count / 3) : 0;
       const t0 = performance.now();
 
-      // Two-pass collision test:
-      // 1. Standard BVH test (no shrink) to detect potential intersection
-      // 2. Verify with a shrunk version — if the shrunk test ALSO passes,
-      //    it's a real penetration, not just surfaces touching
       const matAToB = dataB.invMat.clone().multiply(dataA.mat);
       const hit = bvhB.intersectsGeometry(geoA, matAToB);
-      if (!hit) continue;
-
-      // Verify: shrink both geometries significantly and re-test.
-      // Parts that merely touch at a boundary will fail the shrunk test.
-      const SHRINK = 0.92; // ~1.2mm inward on a 15mm part
-      geoA.computeBoundingBox();
-      const centroidA = geoA.boundingBox!.getCenter(new THREE.Vector3());
-      const shrinkMatA = new THREE.Matrix4()
-        .makeTranslation(centroidA.x, centroidA.y, centroidA.z)
-        .multiply(new THREE.Matrix4().makeScale(SHRINK, SHRINK, SHRINK))
-        .multiply(new THREE.Matrix4().makeTranslation(-centroidA.x, -centroidA.y, -centroidA.z));
-      const matAToB_shrunk = dataB.invMat.clone().multiply(dataA.mat).multiply(shrinkMatA);
-      const confirmedHit = bvhB.intersectsGeometry(geoA, matAToB_shrunk);
-
       const dt = performance.now() - t0;
       if (dt > 10) {
-        console.warn(`[MeshCollision] SLOW pair: ${dataA.part.definitionId} (${trisA} tris) vs ${dataB.part.definitionId} (${trisB} tris) = ${dt.toFixed(1)}ms hit=${hit} confirmed=${confirmedHit}`);
+        const trisA = geoA.index ? geoA.index.count / 3 : geoA.attributes.position.count / 3;
+        const trisB = geoB ? (geoB.index ? geoB.index.count / 3 : geoB.attributes.position.count / 3) : 0;
+        console.warn(`[MeshCollision] SLOW pair: ${dataA.part.definitionId} (${trisA} tris) vs ${dataB.part.definitionId} (${trisB} tris) = ${dt.toFixed(1)}ms hit=${hit}`);
       }
-      if (confirmedHit) {
+      if (hit) {
         bvhHit++;
         collidingIds.add(idA);
         collidingIds.add(idB);
-
-        // Compute overlap region of the two parts' AABBs
-        const overlapBounds = dataA.aabb.clone().intersect(dataB.aabb);
-        if (overlapBounds.isEmpty()) continue;
 
         // Voxelize part B's geometry within the overlap region → texture for part A's shader
         if (geoB) {

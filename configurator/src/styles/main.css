@@ -270,7 +270,7 @@
   .catalog-item-download {
     position: absolute;
     top: 2px;
-    right: 20px;
+    right: 38px;
     width: 16px;
     height: 16px;
     padding: 0;
@@ -291,6 +291,33 @@
   }
 
   .catalog-item-download:hover {
+    filter: brightness(1.2);
+  }
+
+  .catalog-item-replace {
+    position: absolute;
+    top: 2px;
+    right: 20px;
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #557799;
+    color: #fff;
+    font-size: 11px;
+    line-height: 16px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .catalog-item-wrapper:hover .catalog-item-replace {
+    opacity: 1;
+  }
+
+  .catalog-item-replace:hover {
     filter: brightness(1.2);
   }
 

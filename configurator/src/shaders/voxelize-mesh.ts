@@ -1,13 +1,11 @@
 import * as THREE from "three";
 
-const VOXEL_RESOLUTION = 64; // max voxels per axis
-const DILATION_RADIUS = 5;   // voxels to dilate outward for gradient halo
+const VOXEL_RESOLUTION = 48; // max voxels per axis (lower = faster)
 
 /**
  * Voxelize a mesh geometry into a 3D occupancy texture within a given
- * world-space bounding box. Voxels at the collision surface are 255 (full
- * highlight), with a gradient falloff over DILATION_RADIUS voxels outward
- * so the highlight is visible beyond the exact intersection.
+ * world-space bounding box. Occupied voxels are 255, empty are 0.
+ * The GPU's linear texture filtering creates a natural gradient at boundaries.
  */
 export function voxelizeMesh(
   geometry: THREE.BufferGeometry,
@@ -15,25 +13,23 @@ export function voxelizeMesh(
   bounds: THREE.Box3,
   resolution: number = VOXEL_RESOLUTION,
 ): { texture: THREE.Data3DTexture; boundsMin: THREE.Vector3; boundsMax: THREE.Vector3; size: [number, number, number] } {
-  // Pad bounds by dilation radius so the gradient extends beyond the overlap region
+  // Pad bounds by ~2 voxels so the linear filter gradient is visible beyond the surface
   const extent0 = bounds.max.clone().sub(bounds.min);
   const maxExtent0 = Math.max(extent0.x, extent0.y, extent0.z);
   const voxelApprox = maxExtent0 / resolution;
-  const pad = voxelApprox * DILATION_RADIUS + 1.0;
+  const pad = voxelApprox * 2 + 0.5;
 
   const boundsMin = bounds.min.clone().addScalar(-pad);
   const boundsMax = bounds.max.clone().addScalar(pad);
   const extent = boundsMax.clone().sub(boundsMin);
   const maxExtent = Math.max(extent.x, extent.y, extent.z);
 
-  // Scale resolution per axis proportional to extent
   const nx = Math.max(2, Math.ceil((extent.x / maxExtent) * resolution));
   const ny = Math.max(2, Math.ceil((extent.y / maxExtent) * resolution));
   const nz = Math.max(2, Math.ceil((extent.z / maxExtent) * resolution));
   const voxelSize = new THREE.Vector3(extent.x / nx, extent.y / ny, extent.z / nz);
 
-  // Phase 1: binary rasterization
-  const binary = new Uint8Array(nx * ny * nz);
+  const data = new Uint8Array(nx * ny * nz);
 
   const pos = geometry.attributes.position;
   const idx = geometry.index;
@@ -67,52 +63,7 @@ export function voxelizeMesh(
     for (let z = z0; z <= z1; z++) {
       for (let y = y0; y <= y1; y++) {
         for (let x = x0; x <= x1; x++) {
-          binary[x + y * nx + z * nx * ny] = 1;
-        }
-      }
-    }
-  }
-
-  // Phase 2: dilate with distance-based gradient falloff
-  // Use a simple 3D distance transform approximation via iterative dilation
-  const data = new Uint8Array(nx * ny * nz);
-  const R = DILATION_RADIUS;
-
-  for (let z = 0; z < nz; z++) {
-    for (let y = 0; y < ny; y++) {
-      for (let x = 0; x < nx; x++) {
-        const idx3d = x + y * nx + z * nx * ny;
-        if (binary[idx3d]) {
-          data[idx3d] = 255; // core: full intensity
-          continue;
-        }
-        // Search neighborhood for nearest occupied voxel
-        let minDist = R + 1;
-        const x0 = Math.max(0, x - R);
-        const x1 = Math.min(nx - 1, x + R);
-        const y0 = Math.max(0, y - R);
-        const y1 = Math.min(ny - 1, y + R);
-        const z0 = Math.max(0, z - R);
-        const z1 = Math.min(nz - 1, z + R);
-
-        outer:
-        for (let dz = z0; dz <= z1; dz++) {
-          for (let dy = y0; dy <= y1; dy++) {
-            for (let dx = x0; dx <= x1; dx++) {
-              if (binary[dx + dy * nx + dz * nx * ny]) {
-                const dist = Math.sqrt((dx - x) ** 2 + (dy - y) ** 2 + (dz - z) ** 2);
-                if (dist < minDist) {
-                  minDist = dist;
-                  if (dist <= 1) break outer; // already adjacent, can't get closer
-                }
-              }
-            }
-          }
-        }
-
-        if (minDist <= R) {
-          // Linear falloff: 1.0 at surface → 0.0 at R voxels away
-          data[idx3d] = Math.round(255 * (1.0 - minDist / (R + 1)));
+          data[x + y * nx + z * nx * ny] = 255;
         }
       }
     }
@@ -121,6 +72,7 @@ export function voxelizeMesh(
   const texture = new THREE.Data3DTexture(data, nx, ny, nz);
   texture.format = THREE.RedFormat;
   texture.type = THREE.UnsignedByteType;
+  // LinearFilter gives free GPU-interpolated gradient at voxel boundaries
   texture.minFilter = THREE.LinearFilter;
   texture.magFilter = THREE.LinearFilter;
   texture.wrapS = THREE.ClampToEdgeWrapping;

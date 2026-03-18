@@ -1,7 +1,7 @@
 import { useState, useSyncExternalStore, useCallback } from "react";
 import { PART_CATALOG } from "../data/catalog";
 import { PART_COLORS } from "../constants";
-import { subscribeCustomParts, getCustomPartsSnapshot, importModelFile, deleteCustomPart, deleteUnusedCustomParts, downloadCustomPart } from "../data/custom-parts";
+import { subscribeCustomParts, getCustomPartsSnapshot, importModelFile, deleteCustomPart, deleteUnusedCustomParts, downloadCustomPart, replaceCustomPart } from "../data/custom-parts";
 import { useThumbnail } from "../thumbnails/useThumbnail";
 import type { InteractionMode, PartCategory, PartDefinition } from "../types";
 
@@ -284,6 +284,26 @@ export function Sidebar({ onSelectPart, activeMode, usedDefinitionIds }: Sidebar
                           }}
                         >
                           &#8595;
+                        </button>
+                        <button
+                          className="catalog-item-replace"
+                          title={`Replace ${part.name} with a new file`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const input = document.createElement("input");
+                            input.type = "file";
+                            input.accept = ".stl,.3mf";
+                            input.onchange = async () => {
+                              const file = input.files?.[0];
+                              if (file) {
+                                try { await replaceCustomPart(part.id, file); }
+                                catch (err) { console.error("Replace failed:", err); }
+                              }
+                            };
+                            input.click();
+                          }}
+                        >
+                          &#8635;
                         </button>
                         <button
                           className="catalog-item-delete"
