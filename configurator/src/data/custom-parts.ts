@@ -94,6 +94,16 @@ export async function downloadCustomPart(defId: string): Promise<void> {
   URL.revokeObjectURL(url);
 }
 
+/** Delete all custom parts whose IDs are not in the given set of used definition IDs */
+export async function deleteUnusedCustomParts(usedDefinitionIds: Set<string>): Promise<void> {
+  const toDelete = customDefinitions
+    .filter((d) => !usedDefinitionIds.has(d.id))
+    .map((d) => d.id);
+  for (const id of toDelete) {
+    await deleteCustomPart(id);
+  }
+}
+
 /** Delete a custom part from the library (geometry store, definitions, and persistence) */
 export async function deleteCustomPart(defId: string): Promise<void> {
   const idx = customDefinitions.findIndex((d) => d.id === defId);
