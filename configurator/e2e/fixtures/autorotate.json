@@ -1,0 +1,454 @@
+{
+  "version": "1.0",
+  "name": "My Rack",
+  "parts": [
+    {
+      "type": "connector-3d3w",
+      "position": [
+        0,
+        1,
+        -3
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-18u",
+      "position": [
+        0,
+        1,
+        -2
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "z"
+    },
+    {
+      "type": "support-17u",
+      "position": [
+        1,
+        1,
+        16
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "x"
+    },
+    {
+      "type": "connector-3d3w",
+      "position": [
+        18,
+        1,
+        16
+      ],
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-18u",
+      "position": [
+        18,
+        1,
+        -2
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "z"
+    },
+    {
+      "type": "connector-3d3w",
+      "position": [
+        18,
+        1,
+        -3
+      ],
+      "rotation": [
+        0,
+        270,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-17u",
+      "position": [
+        1,
+        1,
+        -3
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "x"
+    },
+    {
+      "type": "support-13u",
+      "position": [
+        0,
+        2,
+        16
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-17u",
+      "position": [
+        1,
+        15,
+        16
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "x"
+    },
+    {
+      "type": "support-18u",
+      "position": [
+        0,
+        15,
+        -2
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "z"
+    },
+    {
+      "type": "support-13u",
+      "position": [
+        18,
+        2,
+        16
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-13u",
+      "position": [
+        18,
+        2,
+        -3
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-13u",
+      "position": [
+        0,
+        2,
+        -3
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-17u",
+      "position": [
+        1,
+        15,
+        -3
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "x"
+    },
+    {
+      "type": "connector-2d3w-pt-z",
+      "position": [
+        18,
+        1,
+        2
+      ],
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "connector-2d3w-pt-z",
+      "position": [
+        0,
+        1,
+        2
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "connector-3d4w",
+      "position": [
+        0,
+        15,
+        16
+      ],
+      "rotation": [
+        270,
+        0,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "connector-3d4w",
+      "position": [
+        18,
+        15,
+        16
+      ],
+      "rotation": [
+        90,
+        180,
+        270
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "connector-3d4w",
+      "position": [
+        18,
+        15,
+        -3
+      ],
+      "rotation": [
+        90,
+        180,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "other-homeracker-pi5-case-2",
+      "position": [
+        5,
+        17,
+        14
+      ],
+      "rotation": [
+        0,
+        270,
+        90
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "other-homeracker-pi5-case-4",
+      "position": [
+        6,
+        17,
+        14
+      ],
+      "rotation": [
+        90,
+        270,
+        180
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "connector-2d3w-pt-x",
+      "position": [
+        0,
+        15,
+        13
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "connector-2d3w-pt-z",
+      "position": [
+        18,
+        15,
+        13
+      ],
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-6u",
+      "position": [
+        0,
+        16,
+        16
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-6u",
+      "position": [
+        0,
+        16,
+        -3
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-6u",
+      "position": [
+        18,
+        16,
+        -3
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-6u",
+      "position": [
+        18,
+        16,
+        16
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-18u",
+      "position": [
+        18,
+        15,
+        -2
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "z"
+    },
+    {
+      "type": "connector-3d4w-foot",
+      "position": [
+        0,
+        1,
+        16
+      ],
+      "rotation": [
+        90,
+        0,
+        270
+      ],
+      "orientation": "y"
+    },
+    {
+      "type": "support-17u",
+      "position": [
+        1,
+        15,
+        13
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "orientation": "x"
+    },
+    {
+      "type": "support-17u",
+      "position": [
+        1,
+        1,
+        2
+      ],
+      "rotation": [
+        180,
+        0,
+        0
+      ],
+      "orientation": "x"
+    },
+    {
+      "type": "connector-3d4w",
+      "position": [
+        0,
+        28,
+        -3
+      ],
+      "rotation": [
+        90,
+        270,
+        90
+      ],
+      "orientation": "y"
+    }
+  ]
+}
