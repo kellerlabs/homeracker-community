@@ -52,6 +52,7 @@ jobs:
         with:
           args: >-
             --standalone
+            --lua-filter .github/pandoc-absolutify.lua
             --metadata title="HomeRacker Community"
             --css https://cdn.jsdelivr.net/npm/water.css@2/out/dark.min.css
             -o configurator/_site/index.html
