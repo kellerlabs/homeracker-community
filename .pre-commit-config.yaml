@@ -23,7 +23,7 @@ repos:
     hooks:
       - id: renovate-config-validator
         args: ["--strict"]
-        language_version: lts
+        language_version: "22.17.1"
         files: ^renovate\.json5$
   - repo: https://github.com/detailyang/pre-commit-shell
     rev: v1.0.6
@@ -35,3 +35,11 @@ repos:
     hooks:
       - id: yamllint
         args: ['-c', '.lint/yamllint/.yamllint']
+  - repo: local
+    hooks:
+      - id: makerworld-export
+        name: MakerWorld export
+        entry: .githooks/makerworld-export
+        language: script
+        files: ^models/.*\.scad$
+        pass_filenames: false
