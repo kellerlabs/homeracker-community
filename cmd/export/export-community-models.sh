@@ -15,6 +15,7 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 #   - Files: export specific .scad file
 EXPORT_PATHS=(
     "models/temp_locking_pin/temp_pin.scad"
+    "models/patch_panel/patch_panel.scad"
 )
 
 if [ ${#EXPORT_PATHS[@]} -eq 0 ]; then
