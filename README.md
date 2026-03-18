@@ -13,12 +13,12 @@ The original [kellerlabs/homeracker](https://github.com/kellerlabs/homeracker) r
 
 Plan, visualize, and build your HomeRacker setup with the interactive 3D configurator:
 
-**[Launch Configurator](https://kellerlabs.github.io/homeracker-community/configurator/)**
+### **[Launch HomeRacker Configurator](https://kellerlabs.github.io/homeracker-community/configurator/)**
 
 ## Community Models
 
-| | |
-|:---:|:---:|
+|                                                                                                                                     |                                                                                                                                            |
+| :---------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------: |
 | [![Keystone Patch Panel](models/patch_panel/preview.png)](models/patch_panel/) <br> **[Keystone Patch Panel](models/patch_panel/)** | [![Temp Locking Pin](models/temp_locking_pin/preview.png)](models/temp_locking_pin/) <br> **[Temp Locking Pin](models/temp_locking_pin/)** |
 
 
