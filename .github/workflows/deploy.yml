@@ -42,6 +42,12 @@ jobs:
       - run: |
           mkdir -p _site/configurator
           cp -r dist/* _site/configurator/
+          # Copy model preview images so the README gallery works
+          cd ..
+          find models -name "preview.png" -o -name "preview.jpg" | while read -r f; do
+            mkdir -p "configurator/_site/$(dirname "$f")"
+            cp "$f" "configurator/_site/$f"
+          done
       - uses: docker://pandoc/core:latest
         with:
           args: >-
