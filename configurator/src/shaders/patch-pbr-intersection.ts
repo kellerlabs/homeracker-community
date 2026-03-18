@@ -1,108 +1,119 @@
 import * as THREE from "three";
+import type { CollisionVoxelData } from "../assembly/mesh-collision";
 
-const MAX_AABBS = 32;
+const MAX_VOXEL_TEXTURES = 4; // max simultaneous collision partners
+
+export interface PatchedUniforms {
+  highlightIntensity: { value: number };
+  voxelCount: { value: number };
+}
 
 /**
- * Patch a PBR material (MeshStandardMaterial) to add intersection AABB highlighting.
- * Preserves all PBR properties (normal maps, roughness, AO, etc.) by injecting
- * custom GLSL into the existing shader via onBeforeCompile.
+ * Patch a PBR material to highlight fragments that fall inside a 3D occupancy
+ * texture (voxelized collision partner geometry). Preserves all PBR properties.
  *
- * Returns a reference object whose `.value` properties can be updated each frame
- * to animate the highlight or change AABBs.
+ * Supports up to MAX_VOXEL_TEXTURES simultaneous collision partners.
  */
-export function patchPBRWithIntersection(
+export function patchPBRWithVoxelIntersection(
   material: THREE.MeshStandardMaterial,
-  aabbs: THREE.Box3[],
+  voxels: CollisionVoxelData[],
   highlightColor: THREE.Color = new THREE.Color(0xff3333),
   highlightIntensity: number = 0.7,
-): { uniforms: { aabbCount: { value: number }; aabbMin: { value: THREE.Vector3[] }; aabbMax: { value: THREE.Vector3[] }; highlightIntensity: { value: number } } } {
-  const count = Math.min(aabbs.length, MAX_AABBS);
-  const mins = Array.from({ length: MAX_AABBS }, (_, i) =>
-    i < count ? aabbs[i].min.clone() : new THREE.Vector3()
-  );
-  const maxs = Array.from({ length: MAX_AABBS }, (_, i) =>
-    i < count ? aabbs[i].max.clone() : new THREE.Vector3()
-  );
+): { uniforms: PatchedUniforms } {
+  const count = Math.min(voxels.length, MAX_VOXEL_TEXTURES);
 
-  const uniforms = {
-    aabbCount: { value: count },
-    aabbMin: { value: mins },
-    aabbMax: { value: maxs },
+  // Build uniform objects
+  const textures: { value: THREE.Data3DTexture }[] = [];
+  const mins: { value: THREE.Vector3 }[] = [];
+  const maxs: { value: THREE.Vector3 }[] = [];
+  const empty3d = new THREE.Data3DTexture(new Uint8Array(8), 2, 2, 2);
+  empty3d.format = THREE.RedFormat;
+  empty3d.needsUpdate = true;
+
+  for (let i = 0; i < MAX_VOXEL_TEXTURES; i++) {
+    if (i < count) {
+      textures.push({ value: voxels[i].texture });
+      mins.push({ value: voxels[i].boundsMin.clone() });
+      maxs.push({ value: voxels[i].boundsMax.clone() });
+    } else {
+      textures.push({ value: empty3d });
+      mins.push({ value: new THREE.Vector3() });
+      maxs.push({ value: new THREE.Vector3() });
+    }
+  }
+
+  const uniforms: any = {
     uHighlightColor: { value: highlightColor.clone() },
     highlightIntensity: { value: highlightIntensity },
+    voxelCount: { value: count },
   };
+  for (let i = 0; i < MAX_VOXEL_TEXTURES; i++) {
+    uniforms[`voxelTex${i}`] = textures[i];
+    uniforms[`voxelMin${i}`] = mins[i];
+    uniforms[`voxelMax${i}`] = maxs[i];
+  }
 
   material.onBeforeCompile = (shader) => {
-    // Merge our uniforms into the shader's uniform set
     Object.assign(shader.uniforms, uniforms);
 
-    // Vertex shader: add a varying for world position
+    // Vertex shader: add world position varying
     shader.vertexShader = shader.vertexShader.replace(
       'void main() {',
       'varying vec3 vIntersectWorldPos;\nvoid main() {'
     );
-    // Inject world position computation after Three.js computes `transformed`
     shader.vertexShader = shader.vertexShader.replace(
       '#include <worldpos_vertex>',
       '#include <worldpos_vertex>\nvIntersectWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;'
     );
 
-    // Fragment shader: declare uniforms and varying
-    shader.fragmentShader =
-      `uniform int aabbCount;
-uniform vec3 aabbMin[${MAX_AABBS}];
-uniform vec3 aabbMax[${MAX_AABBS}];
+    // Fragment shader: declare uniforms and 3D texture samplers
+    let declarations = `
 uniform vec3 uHighlightColor;
 uniform float highlightIntensity;
+uniform int voxelCount;
 varying vec3 vIntersectWorldPos;
-` + shader.fragmentShader;
+`;
+    for (let i = 0; i < MAX_VOXEL_TEXTURES; i++) {
+      declarations += `uniform sampler3D voxelTex${i};\n`;
+      declarations += `uniform vec3 voxelMin${i};\n`;
+      declarations += `uniform vec3 voxelMax${i};\n`;
+    }
+    shader.fragmentShader = declarations + shader.fragmentShader;
 
-    // Inject AABB test just before the final dithering step
-    shader.fragmentShader = shader.fragmentShader.replace(
-      '#include <dithering_fragment>',
-      `
-      bool insideAny = false;
-      for (int i = 0; i < ${MAX_AABBS}; i++) {
-        if (i >= aabbCount) break;
-        if (vIntersectWorldPos.x >= aabbMin[i].x && vIntersectWorldPos.x <= aabbMax[i].x &&
-            vIntersectWorldPos.y >= aabbMin[i].y && vIntersectWorldPos.y <= aabbMax[i].y &&
-            vIntersectWorldPos.z >= aabbMin[i].z && vIntersectWorldPos.z <= aabbMax[i].z) {
-          insideAny = true;
-          break;
+    // Build the sampling code — check each voxel texture
+    let samplingCode = `
+      float maxOcc = 0.0;
+`;
+    for (let i = 0; i < MAX_VOXEL_TEXTURES; i++) {
+      samplingCode += `
+      if (${i} < voxelCount) {
+        vec3 extent${i} = voxelMax${i} - voxelMin${i};
+        vec3 uvw${i} = (vIntersectWorldPos - voxelMin${i}) / extent${i};
+        if (uvw${i}.x >= 0.0 && uvw${i}.x <= 1.0 &&
+            uvw${i}.y >= 0.0 && uvw${i}.y <= 1.0 &&
+            uvw${i}.z >= 0.0 && uvw${i}.z <= 1.0) {
+          float occ${i} = texture(voxelTex${i}, uvw${i}).r;
+          maxOcc = max(maxOcc, occ${i});
         }
       }
-      if (insideAny) {
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, uHighlightColor, highlightIntensity);
+`;
+    }
+    samplingCode += `
+      if (maxOcc > 0.01) {
+        float blend = maxOcc * highlightIntensity;
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, uHighlightColor, blend);
       }
       #include <dithering_fragment>
-      `
+`;
+
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <dithering_fragment>',
+      samplingCode
     );
   };
 
-  // Force shader recompilation
   material.needsUpdate = true;
-  // Unique cache key so patched materials don't share programs with unpatched ones
-  material.customProgramCacheKey = () => `intersection-${count}`;
+  material.customProgramCacheKey = () => `voxel-intersection-${count}`;
 
   return { uniforms };
-}
-
-/**
- * Update AABB data on a patched material's uniforms.
- */
-export function updatePatchedAABBs(
-  uniforms: { aabbCount: { value: number }; aabbMin: { value: THREE.Vector3[] }; aabbMax: { value: THREE.Vector3[] } },
-  aabbs: THREE.Box3[],
-): void {
-  const count = Math.min(aabbs.length, MAX_AABBS);
-  uniforms.aabbCount.value = count;
-  for (let i = 0; i < MAX_AABBS; i++) {
-    if (i < count) {
-      uniforms.aabbMin.value[i].copy(aabbs[i].min);
-      uniforms.aabbMax.value[i].copy(aabbs[i].max);
-    } else {
-      uniforms.aabbMin.value[i].set(0, 0, 0);
-      uniforms.aabbMax.value[i].set(0, 0, 0);
-    }
-  }
 }

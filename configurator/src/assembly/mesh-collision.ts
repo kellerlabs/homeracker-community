@@ -7,6 +7,7 @@ import { getCustomPartGeometry, isCustomPart } from "../data/custom-parts";
 import { getRegisteredGeometry } from "./geometry-registry";
 import { orientationToRotation, rotateGridCells, transformCell, rotateAxis } from "./grid-utils";
 import { BASE_UNIT } from "../constants";
+import { voxelizeMesh } from "../shaders/voxelize-mesh";
 
 // BVH cache keyed by definitionId
 const bvhCache = new Map<string, MeshBVH>();
@@ -204,10 +205,17 @@ interface PartCollisionData {
  * 3. AABB mid-phase: skip pairs whose world bounding boxes don't overlap
  * 4. BVH narrow phase: actual mesh intersection test (yielded)
  */
+/** 3D occupancy texture data for a collision partner */
+export interface CollisionVoxelData {
+  texture: THREE.Data3DTexture;
+  boundsMin: THREE.Vector3;
+  boundsMax: THREE.Vector3;
+}
+
 export interface CollisionResult {
   collidingIds: Set<string>;
-  /** For each colliding part instance, tight world-space AABBs of intersection regions */
-  customPartCollisionAABBs: Map<string, THREE.Box3[]>;
+  /** For each colliding part instance, 3D occupancy textures of its collision partners */
+  collisionVoxels: Map<string, CollisionVoxelData[]>;
 }
 
 export async function detectCollidingPartIds(
@@ -227,7 +235,7 @@ export async function detectCollidingPartIds(
   }
 
   console.log("[MeshCollision] candidate pairs:", candidatePairs.size);
-  if (candidatePairs.size === 0) return { collidingIds: new Set(), customPartCollisionAABBs: new Map() };
+  if (candidatePairs.size === 0) return { collidingIds: new Set(), collisionVoxels: new Map() };
 
   // Pre-compute per-part data (matrix, inverse, AABB) on demand
   const partDataCache = new Map<string, PartCollisionData | null>();
@@ -247,14 +255,13 @@ export async function detectCollidingPartIds(
   }
 
   const collidingIds = new Set<string>();
-  const customPartCollisionAABBs = new Map<string, THREE.Box3[]>();
-  const addedCellsPerPart = new Map<string, Set<string>>();
+  const collisionVoxels = new Map<string, CollisionVoxelData[]>();
   const pairs = Array.from(candidatePairs);
   const BATCH_SIZE = 10;
   let ptSkipped = 0, aabbSkipped = 0, bvhTested = 0, bvhHit = 0, noGeoSkipped = 0;
 
   for (let batch = 0; batch < pairs.length; batch += BATCH_SIZE) {
-    if (signal?.aborted) return { collidingIds: new Set(), customPartCollisionAABBs: new Map() };
+    if (signal?.aborted) return { collidingIds: new Set(), collisionVoxels: new Map() };
 
     const end = Math.min(batch + BATCH_SIZE, pairs.length);
     for (let k = batch; k < end; k++) {
@@ -288,58 +295,52 @@ export async function detectCollidingPartIds(
       const trisB = geoB ? (geoB.index ? geoB.index.count / 3 : geoB.attributes.position.count / 3) : 0;
       const t0 = performance.now();
 
-      // Shrink geoA slightly around its centroid before testing intersection.
-      // This adds ~1mm tolerance so parts that merely touch at a shared
-      // boundary (e.g. connector arm tip meets support end) aren't flagged.
-      const SHRINK = 0.95;
-      geoA.computeBoundingBox();
-      const centroid = geoA.boundingBox!.getCenter(new THREE.Vector3());
-      const shrinkMat = new THREE.Matrix4()
-        .makeTranslation(centroid.x, centroid.y, centroid.z)
-        .multiply(new THREE.Matrix4().makeScale(SHRINK, SHRINK, SHRINK))
-        .multiply(new THREE.Matrix4().makeTranslation(-centroid.x, -centroid.y, -centroid.z));
-      const matAToB = dataB.invMat.clone().multiply(dataA.mat).multiply(shrinkMat);
+      // Two-pass collision test:
+      // 1. Standard BVH test (no shrink) to detect potential intersection
+      // 2. Verify with a shrunk version — if the shrunk test ALSO passes,
+      //    it's a real penetration, not just surfaces touching
+      const matAToB = dataB.invMat.clone().multiply(dataA.mat);
       const hit = bvhB.intersectsGeometry(geoA, matAToB);
+      if (!hit) continue;
+
+      // Verify: shrink both geometries significantly and re-test.
+      // Parts that merely touch at a boundary will fail the shrunk test.
+      const SHRINK = 0.92; // ~1.2mm inward on a 15mm part
+      geoA.computeBoundingBox();
+      const centroidA = geoA.boundingBox!.getCenter(new THREE.Vector3());
+      const shrinkMatA = new THREE.Matrix4()
+        .makeTranslation(centroidA.x, centroidA.y, centroidA.z)
+        .multiply(new THREE.Matrix4().makeScale(SHRINK, SHRINK, SHRINK))
+        .multiply(new THREE.Matrix4().makeTranslation(-centroidA.x, -centroidA.y, -centroidA.z));
+      const matAToB_shrunk = dataB.invMat.clone().multiply(dataA.mat).multiply(shrinkMatA);
+      const confirmedHit = bvhB.intersectsGeometry(geoA, matAToB_shrunk);
+
       const dt = performance.now() - t0;
       if (dt > 10) {
-        console.warn(`[MeshCollision] SLOW pair: ${dataA.part.definitionId} (${trisA} tris) vs ${dataB.part.definitionId} (${trisB} tris) = ${dt.toFixed(1)}ms hit=${hit}`);
+        console.warn(`[MeshCollision] SLOW pair: ${dataA.part.definitionId} (${trisA} tris) vs ${dataB.part.definitionId} (${trisB} tris) = ${dt.toFixed(1)}ms hit=${hit} confirmed=${confirmedHit}`);
       }
-      if (hit) {
+      if (confirmedHit) {
         bvhHit++;
         collidingIds.add(idA);
         collidingIds.add(idB);
-        // Find shared grid cells and create cell-sized AABBs for precise
-        // intersection region highlighting (15mm cubes where both parts overlap)
-        const cellsA = new Set<string>();
-        const cellsB = new Set<string>();
-        for (const [key, ids] of assembly.gridOccupancy) {
-          if (ids.includes(idA)) cellsA.add(key);
-          if (ids.includes(idB)) cellsB.add(key);
+
+        // Compute overlap region of the two parts' AABBs
+        const overlapBounds = dataA.aabb.clone().intersect(dataB.aabb);
+        if (overlapBounds.isEmpty()) continue;
+
+        // Voxelize part B's geometry within the overlap region → texture for part A's shader
+        if (geoB) {
+          const voxelB = voxelizeMesh(geoB, dataB.mat, overlapBounds);
+          const arrA = collisionVoxels.get(idA) || [];
+          arrA.push(voxelB);
+          collisionVoxels.set(idA, arrA);
         }
-        for (const key of cellsA) {
-          if (cellsB.has(key)) {
-            // Track which cells we've already added per part to avoid duplicates
-            if (!addedCellsPerPart.has(idA)) addedCellsPerPart.set(idA, new Set());
-            if (!addedCellsPerPart.has(idB)) addedCellsPerPart.set(idB, new Set());
-            const [cx, cy, cz] = key.split(",").map(Number);
-            const cellBox = () => new THREE.Box3(
-              new THREE.Vector3(cx * BASE_UNIT, cy * BASE_UNIT, cz * BASE_UNIT),
-              new THREE.Vector3((cx + 1) * BASE_UNIT, (cy + 1) * BASE_UNIT, (cz + 1) * BASE_UNIT),
-            );
-            if (!addedCellsPerPart.get(idA)!.has(key)) {
-              addedCellsPerPart.get(idA)!.add(key);
-              const arr = customPartCollisionAABBs.get(idA) || [];
-              arr.push(cellBox());
-              customPartCollisionAABBs.set(idA, arr);
-            }
-            if (!addedCellsPerPart.get(idB)!.has(key)) {
-              addedCellsPerPart.get(idB)!.add(key);
-              const arr = customPartCollisionAABBs.get(idB) || [];
-              arr.push(cellBox());
-              customPartCollisionAABBs.set(idB, arr);
-            }
-          }
-        }
+
+        // Voxelize part A's geometry within the overlap region → texture for part B's shader
+        const voxelA = voxelizeMesh(geoA, dataA.mat, overlapBounds);
+        const arrB = collisionVoxels.get(idB) || [];
+        arrB.push(voxelA);
+        collisionVoxels.set(idB, arrB);
       }
     }
 
@@ -350,5 +351,5 @@ export async function detectCollidingPartIds(
   }
 
   console.log(`[MeshCollision] ptSkipped=${ptSkipped} aabbSkipped=${aabbSkipped} noGeo=${noGeoSkipped} bvhTested=${bvhTested} bvhHit=${bvhHit} colliding=${collidingIds.size}`);
-  return { collidingIds, customPartCollisionAABBs };
+  return { collidingIds, collisionVoxels };
 }
