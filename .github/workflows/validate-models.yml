@@ -5,6 +5,7 @@ on:
   pull_request:
     paths:
       - 'models/**/*.scad'
+      - 'cmd/**'
       - '.github/workflows/validate-models.yml'
       - 'scadm.json'
 
@@ -30,10 +31,30 @@ jobs:
 
       - name: Validate models
         run: |
-          find models -name '*.scad' | while read -r model; do
+          # Discover scadm-installed library path
+          LIBS_DIR="$(pwd)/bin/openscad/libraries"
+          if [ ! -d "$LIBS_DIR" ]; then
+            echo "WARNING: scadm libraries not found at $LIBS_DIR, trying without OPENSCADPATH"
+            LIBS_DIR=""
+          fi
+          export OPENSCADPATH="${LIBS_DIR}"
+
+          # Discover scadm-installed OpenSCAD or fall back to system
+          if [ -x "$(pwd)/bin/openscad/openscad" ]; then
+            OPENSCAD="$(pwd)/bin/openscad/openscad"
+          elif [ -x "$(pwd)/bin/openscad/OpenSCAD.AppImage" ]; then
+            OPENSCAD="$(pwd)/bin/openscad/OpenSCAD.AppImage"
+          else
+            OPENSCAD="openscad"
+          fi
+
+          echo "Using OpenSCAD: $OPENSCAD"
+          echo "Using libraries: ${OPENSCADPATH:-system default}"
+
+          find models -name '*.scad' -not -path '*/makerworld/*' | while read -r model; do
             log="/tmp/$(basename "$model" .scad).log"
             echo "Rendering $model..."
-            xvfb-run openscad --export-format binstl -o /tmp/out.stl "$model" >"$log" 2>&1 || { echo "FAILED: $model"; exit 1; }
+            xvfb-run "$OPENSCAD" --export-format binstl -o /tmp/out.stl "$model" >"$log" 2>&1 || { echo "FAILED: $model"; cat "$log"; exit 1; }
           done
 
       - name: Upload logs on failure

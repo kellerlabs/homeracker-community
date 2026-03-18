@@ -10,7 +10,7 @@ Thanks for your interest in contributing! This repository is the place to share 
 
 This repository uses [pre-commit](https://pre-commit.com/) to enforce code quality checks before commits.
 
-**Prerequisites**: Python 3.x installed on your system
+**Prerequisites**: Python 3.12+ installed on your system
 
 ```bash
 # Clone and setup

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Pre-commit hook for MakerWorld exports
+#
+# Exports all configured models and validates they are committed.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Run the export script
+if ! "${PROJECT_ROOT}/cmd/export/export-community-models.sh"; then
+    exit 1
+fi
+
+# Auto-stage any generated files
+cd "${PROJECT_ROOT}"
+MODIFIED=$(git diff --name-only models/*/makerworld/ models/*/preview.png 2>/dev/null || true)
+UNTRACKED=$(git ls-files --others --exclude-standard models/*/makerworld/ models/*/preview.png 2>/dev/null || true)
+
+TO_STAGE=""
+[ -n "$MODIFIED" ] && TO_STAGE="$MODIFIED"
+[ -n "$UNTRACKED" ] && TO_STAGE="${TO_STAGE:+$TO_STAGE
+}$UNTRACKED"
+
+if [ -n "$TO_STAGE" ]; then
+    echo "$TO_STAGE" | xargs git add
+    echo "Auto-staged generated files:"
+    echo "$TO_STAGE"
+fi
