@@ -104,6 +104,48 @@ export async function deleteUnusedCustomParts(usedDefinitionIds: Set<string>): P
   }
 }
 
+/**
+ * Replace a custom part's geometry with a new file, keeping the same ID
+ * so all placed instances stay in their positions/rotations.
+ */
+export async function replaceCustomPart(defId: string, file: File): Promise<void> {
+  const idx = customDefinitions.findIndex((d) => d.id === defId);
+  if (idx === -1) return;
+
+  const format = detectFormat(file.name);
+  const buffer = await file.arrayBuffer();
+
+  let geometry: THREE.BufferGeometry;
+  if (format === "stl") {
+    geometry = stlLoader.parse(buffer);
+  } else {
+    const parts = parse3MF(buffer);
+    if (parts.length === 0) throw new Error("3MF file contains no mesh geometry");
+    geometry = parts[0].geometry;
+  }
+
+  const { gridCells, cellsX, cellsY, cellsZ } = voxelizeGeometry(geometry);
+  geometry.center();
+
+  // Dispose old geometry
+  const oldGeo = geometryStore.get(defId);
+  if (oldGeo) oldGeo.dispose();
+
+  // Update in place
+  geometryStore.set(defId, geometry);
+  const baseName = file.name.replace(/\.(stl|3mf)$/i, "");
+  customDefinitions[idx] = {
+    ...customDefinitions[idx],
+    name: baseName,
+    description: `Imported ${format.toUpperCase()} (${cellsX}x${cellsY}x${cellsZ} units)`,
+    gridCells,
+  };
+
+  notify();
+  persistMeta();
+  await saveSTLBuffer(defId, buffer);
+}
+
 /** Delete a custom part from the library (geometry store, definitions, and persistence) */
 export async function deleteCustomPart(defId: string): Promise<void> {
   const idx = customDefinitions.findIndex((d) => d.id === defId);
