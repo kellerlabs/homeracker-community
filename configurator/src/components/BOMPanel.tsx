@@ -64,6 +64,27 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlash
 
   return (
     <div className={`bom-panel${showInventory ? " bom-panel-wide" : ""}`}>
+      {selectedParts.length > 0 && (
+        <div className="selection-panel">
+          <h3>Selected ({selectedParts.length})</h3>
+          <ColorPicker currentColor={currentColor} onColorChange={onSetColor} />
+          <ul className="selection-list">
+            {selectedParts.map((p) => {
+              const def = getPartDefinition(p.definitionId);
+              return (
+                <li
+                  key={p.instanceId}
+                  className="selection-item"
+                  onClick={() => onFlashPart(p.instanceId)}
+                >
+                  {def?.name ?? p.definitionId}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       <div className="bom-header">
         <h2>Bill of Materials</h2>
         {entries.length > 0 && (
@@ -153,26 +174,6 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlash
         </>
       )}
 
-      {selectedParts.length > 0 && (
-        <div className="selection-panel">
-          <h3>Selected ({selectedParts.length})</h3>
-          <ColorPicker currentColor={currentColor} onColorChange={onSetColor} />
-          <ul className="selection-list">
-            {selectedParts.map((p) => {
-              const def = getPartDefinition(p.definitionId);
-              return (
-                <li
-                  key={p.instanceId}
-                  className="selection-item"
-                  onClick={() => onFlashPart(p.instanceId)}
-                >
-                  {def?.name ?? p.definitionId}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
     </div>
   );
 }
