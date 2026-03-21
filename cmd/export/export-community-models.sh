@@ -14,9 +14,9 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 #   - Directories: auto-discover all .scad files
 #   - Files: export specific .scad file
 EXPORT_PATHS=(
-    # Add model paths here as they are ported, e.g.:
-    # "models/temp_locking_pin"
-    # "models/patch_panel"
+    "models/temp_locking_pin/temp_pin.scad"
+    "models/patch_panel/patch_panel.scad"
+    "models/rackmount_ears/rackmount_ears_homeracker.scad"
 )
 
 if [ ${#EXPORT_PATHS[@]} -eq 0 ]; then
@@ -62,6 +62,14 @@ done
 
 if [ $FAILED -eq 1 ]; then
     echo "ERROR: One or more exports failed"
+    exit 1
+fi
+
+echo ""
+echo "Rendering preview images..."
+if ! "${SCRIPT_DIR}/render-previews.sh" "${FILES_TO_EXPORT[@]}"; then
+    echo ""
+    echo "ERROR: Preview rendering failed"
     exit 1
 fi
 

@@ -8,6 +8,20 @@ The original [kellerlabs/homeracker](https://github.com/kellerlabs/homeracker) r
 
 **This is the place** for the community to share their own HomeRacker-based creations — custom modules, adapters, accessories, and anything else built on top of the HomeRacker core.
 
+
+## Configurator
+
+Plan, visualize, and build your HomeRacker setup with the interactive 3D configurator:
+
+### **[Launch HomeRacker Configurator](https://kellerlabs.github.io/homeracker-community/configurator/)**
+
+## Community Models
+
+|                                                                                                                                     |                                                                                                                                            |
+| :---------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------: |
+| [![Keystone Patch Panel](models/patch_panel/preview.png)](models/patch_panel/) <br> **[Keystone Patch Panel](models/patch_panel/)** | [![Temp Locking Pin](models/temp_locking_pin/preview.png)](models/temp_locking_pin/) <br> **[Temp Locking Pin](models/temp_locking_pin/)** |
+
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and contribution guidelines.

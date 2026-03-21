@@ -1,0 +1,68 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "configurator/**"
+      - "README.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: configurator
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - run: bun run build
+
+      # Nest dist inside configurator/ so the site is served at /homeracker-community/configurator/
+      # Root index.html is a rendered version of the repo README
+      - run: |
+          mkdir -p _site/configurator
+          cp -r dist/* _site/configurator/
+          # Copy model preview images so the README gallery works
+          cd ..
+          find models -name "preview.png" -o -name "preview.jpg" | while read -r f; do
+            mkdir -p "configurator/_site/$(dirname "$f")"
+            cp "$f" "configurator/_site/$f"
+          done
+      - uses: docker://pandoc/core:latest
+        with:
+          args: >-
+            --standalone
+            --lua-filter .github/pandoc-absolutify.lua
+            --metadata title="HomeRacker Community"
+            --css https://cdn.jsdelivr.net/npm/water.css@2/out/dark.min.css
+            -o configurator/_site/index.html
+            README.md
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: configurator/_site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
