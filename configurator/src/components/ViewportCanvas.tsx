@@ -45,6 +45,8 @@ interface ViewportProps {
   onPasteParts: (clipboard: ClipboardData, targetPosition: GridPosition, extraRotation?: Rotation3) => void;
   onBoxSelect: (ids: string[]) => void;
   onNudgeParts: (dx: number, dy: number, dz: number) => void;
+  onRotateSelectedParts: (axis: 0 | 1 | 2) => void;
+  onOrientSelectedParts: () => void;
   onEscape: () => void;
   flashPartId: string | null;
   flashDefinitionId: string | null;
@@ -1398,7 +1400,7 @@ export function ViewportCanvas(props: ViewportProps) {
           case "s": setYLift((prev) => Math.max(0, prev - 1)); break;
         }
       } else if (props.mode.type === "select" && props.selectedPartIds.size > 0) {
-        // Arrow key nudge and W/S lift for selected parts
+        // Arrow key nudge, W/S lift, and R/T/F/O rotation for selected parts
         const fine = e.shiftKey ? 0.05 : 1;
         switch (e.key) {
           case "ArrowLeft": e.preventDefault(); props.onNudgeParts(-fine, 0, 0); break;
@@ -1407,6 +1409,10 @@ export function ViewportCanvas(props: ViewportProps) {
           case "ArrowDown": e.preventDefault(); props.onNudgeParts(0, 0, fine); break;
           case "w": case "W": props.onNudgeParts(0, fine, 0); break;
           case "s": case "S": props.onNudgeParts(0, -fine, 0); break;
+          case "r": case "R": props.onRotateSelectedParts(1); break;
+          case "t": case "T": props.onRotateSelectedParts(0); break;
+          case "f": case "F": props.onRotateSelectedParts(2); break;
+          case "o": case "O": props.onOrientSelectedParts(); break;
         }
       } else if (props.mode.type === "place" || props.mode.type === "paste") {
         switch (e.key.toLowerCase()) {
@@ -1425,7 +1431,7 @@ export function ViewportCanvas(props: ViewportProps) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [props.onEscape, props.onDeleteSelected, props.onNudgeParts, props.selectedPartIds, props.mode, isPlacingSupport, rotateAxis, dragState]);
+  }, [props.onEscape, props.onDeleteSelected, props.onNudgeParts, props.onRotateSelectedParts, props.onOrientSelectedParts, props.selectedPartIds, props.mode, isPlacingSupport, rotateAxis, dragState]);
 
   // Start box-select on shift+pointerdown on empty space
   const handleViewportPointerDown = useCallback(
