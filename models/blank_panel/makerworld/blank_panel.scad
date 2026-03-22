@@ -11,8 +11,14 @@ panel_thickness = 2; // [1:0.5:5]
 chamfer = true;
 // Extra clearance around corner notches in mm
 notch_clearance = 2; // [0:0.10:10]
-// Extra clearance on edges where mounting tabs are disabled in mm
-edge_clearance = 2; // [0:0.10:10]
+// Extra clearance on top edge when tab is disabled in mm
+edge_clearance_top = 2; // [0:0.10:10]
+// Extra clearance on bottom edge when tab is disabled in mm
+edge_clearance_bottom = 2; // [0:0.10:10]
+// Extra clearance on left edge when tab is disabled in mm
+edge_clearance_left = 2; // [0:0.10:10]
+// Extra clearance on right edge when tab is disabled in mm
+edge_clearance_right = 2; // [0:0.10:10]
 
 
 /* [Mounting] */
@@ -147,42 +153,44 @@ module blank_panel() {
 
 
 
-
-    _strip = BASE_UNIT + edge_clearance;
+    _st = BASE_UNIT + edge_clearance_top;
+    _sb = BASE_UNIT + edge_clearance_bottom;
+    _sl = BASE_UNIT + edge_clearance_left;
+    _sr = BASE_UNIT + edge_clearance_right;
 
 
     if(!pins_top || !pins_left)
-      translate([-_full_w/2 + _strip/2, 0, _full_h/2 - _strip/2])
-        cuboid([_strip, _cut_d, _strip]);
+      translate([-_full_w/2 + _sl/2, 0, _full_h/2 - _st/2])
+        cuboid([_sl, _cut_d, _st]);
 
     if(!pins_top || !pins_right)
-      translate([_full_w/2 - _strip/2, 0, _full_h/2 - _strip/2])
-        cuboid([_strip, _cut_d, _strip]);
+      translate([_full_w/2 - _sr/2, 0, _full_h/2 - _st/2])
+        cuboid([_sr, _cut_d, _st]);
 
     if(!pins_bottom || !pins_left)
-      translate([-_full_w/2 + _strip/2, 0, -_full_h/2 + _strip/2])
-        cuboid([_strip, _cut_d, _strip]);
+      translate([-_full_w/2 + _sl/2, 0, -_full_h/2 + _sb/2])
+        cuboid([_sl, _cut_d, _sb]);
 
     if(!pins_bottom || !pins_right)
-      translate([_full_w/2 - _strip/2, 0, -_full_h/2 + _strip/2])
-        cuboid([_strip, _cut_d, _strip]);
+      translate([_full_w/2 - _sr/2, 0, -_full_h/2 + _sb/2])
+        cuboid([_sr, _cut_d, _sb]);
 
 
     if(!pins_top)
-      translate([0, 0, _full_h/2 - _strip/2])
-        cuboid([_core_w + EPSILON, _cut_d, _strip]);
+      translate([0, 0, _full_h/2 - _st/2])
+        cuboid([_core_w + EPSILON, _cut_d, _st]);
 
     if(!pins_bottom)
-      translate([0, 0, -_full_h/2 + _strip/2])
-        cuboid([_core_w + EPSILON, _cut_d, _strip]);
+      translate([0, 0, -_full_h/2 + _sb/2])
+        cuboid([_core_w + EPSILON, _cut_d, _sb]);
 
     if(!pins_left)
-      translate([-_full_w/2 + _strip/2, 0, 0])
-        cuboid([_strip, _cut_d, _core_h + EPSILON]);
+      translate([-_full_w/2 + _sl/2, 0, 0])
+        cuboid([_sl, _cut_d, _core_h + EPSILON]);
 
     if(!pins_right)
-      translate([_full_w/2 - _strip/2, 0, 0])
-        cuboid([_strip, _cut_d, _core_h + EPSILON]);
+      translate([_full_w/2 - _sr/2, 0, 0])
+        cuboid([_sr, _cut_d, _core_h + EPSILON]);
 
 
 
