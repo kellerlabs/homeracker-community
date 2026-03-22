@@ -7,13 +7,30 @@ width_units = 6; // [1:24]
 height_units = 4; // [1:24]
 // Panel thickness in mm
 panel_thickness = 2; // [1:0.5:5]
+// Chamfer panel edges
+chamfer = true;
 
 
-/* [Cutouts] */
-// Enable lock pin holes on all edges
-cutouts = true;
-// Notch corners to fit around HomeRacker connectors
-connector_notch = true;
+/* [Mounting] */
+// Enable lock pin mounting tab on top edge
+pins_top = true;
+// Enable lock pin mounting tab on bottom edge
+pins_bottom = true;
+// Enable lock pin mounting tab on left edge
+pins_left = true;
+// Enable lock pin mounting tab on right edge
+pins_right = true;
+
+
+/* [Corner Notches] */
+// Notch top-left corner to fit around HomeRacker connectors
+notch_top_left = true;
+// Notch top-right corner
+notch_top_right = true;
+// Notch bottom-left corner
+notch_bottom_left = true;
+// Notch bottom-right corner
+notch_bottom_right = true;
 
 /* [Hidden] */
 TOLERANCE = 0.2;
@@ -97,60 +114,104 @@ module lock_pin_hole() {
 $fn = 100;
 EPSILON = 0.01;
 
-// Panel dimensions
-panel_width = width_units * BASE_UNIT;
-panel_height = height_units * BASE_UNIT;
+// Core panel dimensions
+_core_w = width_units * BASE_UNIT;
+_core_h = height_units * BASE_UNIT;
+_cham = chamfer ? min(BASE_CHAMFER, panel_thickness/2 - EPSILON) : 0;
 
-// Number of pin holes per edge
-_n_top = width_units;
-_n_side = height_units;
+// Full extent (core + all possible tabs)
+_full_w = _core_w + 2 * BASE_UNIT;
+_full_h = _core_h + 2 * BASE_UNIT;
+
+// Oversized cutter depth
+_cut_d = panel_thickness + EPSILON * 2;
 
 $fn = 100;
 module blank_panel() {
   difference() {
 
     color(HR_RED)
-    cuboid([panel_width, panel_thickness, panel_height],
-           chamfer=min(BASE_CHAMFER, panel_thickness/2 - EPSILON));
+    cuboid([_full_w, panel_thickness, _full_h], chamfer=_cham);
 
-    if(cutouts) {
 
-      translate([0, 0, panel_height / 2 - BASE_UNIT / 2])
-        xcopies(spacing=BASE_UNIT, n=_n_top)
+
+    if(!pins_top || !pins_left)
+      translate([-_full_w/2 + BASE_UNIT/2, 0, _full_h/2 - BASE_UNIT/2])
+        cuboid([BASE_UNIT + EPSILON, _cut_d, BASE_UNIT + EPSILON]);
+
+
+    if(!pins_top || !pins_right)
+      translate([_full_w/2 - BASE_UNIT/2, 0, _full_h/2 - BASE_UNIT/2])
+        cuboid([BASE_UNIT + EPSILON, _cut_d, BASE_UNIT + EPSILON]);
+
+
+    if(!pins_bottom || !pins_left)
+      translate([-_full_w/2 + BASE_UNIT/2, 0, -_full_h/2 + BASE_UNIT/2])
+        cuboid([BASE_UNIT + EPSILON, _cut_d, BASE_UNIT + EPSILON]);
+
+
+    if(!pins_bottom || !pins_right)
+      translate([_full_w/2 - BASE_UNIT/2, 0, -_full_h/2 + BASE_UNIT/2])
+        cuboid([BASE_UNIT + EPSILON, _cut_d, BASE_UNIT + EPSILON]);
+
+
+    if(!pins_top)
+      translate([0, 0, _full_h/2 - BASE_UNIT/2])
+        cuboid([_core_w + EPSILON, _cut_d, BASE_UNIT + EPSILON]);
+
+    if(!pins_bottom)
+      translate([0, 0, -_full_h/2 + BASE_UNIT/2])
+        cuboid([_core_w + EPSILON, _cut_d, BASE_UNIT + EPSILON]);
+
+    if(!pins_left)
+      translate([-_full_w/2 + BASE_UNIT/2, 0, 0])
+        cuboid([BASE_UNIT + EPSILON, _cut_d, _core_h + EPSILON]);
+
+    if(!pins_right)
+      translate([_full_w/2 - BASE_UNIT/2, 0, 0])
+        cuboid([BASE_UNIT + EPSILON, _cut_d, _core_h + EPSILON]);
+
+
+
+    if(pins_top)
+      translate([0, 0, _full_h/2 - BASE_UNIT/2])
+        xcopies(spacing=BASE_UNIT, n=floor(_full_w / BASE_UNIT))
+          xrot(90) lock_pin_hole();
+
+    if(pins_bottom)
+      translate([0, 0, -_full_h/2 + BASE_UNIT/2])
+        xcopies(spacing=BASE_UNIT, n=floor(_full_w / BASE_UNIT))
+          xrot(90) lock_pin_hole();
+
+    if(pins_left)
+      translate([-_full_w/2 + BASE_UNIT/2, 0, 0])
+        zcopies(spacing=BASE_UNIT, n=floor(_full_h / BASE_UNIT))
+          xrot(90) lock_pin_hole();
+
+    if(pins_right)
+      translate([_full_w/2 - BASE_UNIT/2, 0, 0])
+        zcopies(spacing=BASE_UNIT, n=floor(_full_h / BASE_UNIT))
           xrot(90) lock_pin_hole();
 
 
-      translate([0, 0, -panel_height / 2 + BASE_UNIT / 2])
-        xcopies(spacing=BASE_UNIT, n=_n_top)
-          xrot(90) lock_pin_hole();
 
+    _notch_size = [BASE_UNIT + 3, _cut_d, BASE_UNIT + 3];
 
-      translate([-panel_width / 2 + BASE_UNIT / 2, 0, 0])
-        zcopies(spacing=BASE_UNIT, n=_n_side)
-          xrot(90) lock_pin_hole();
+    if(notch_top_left && pins_top && pins_left)
+      translate([-_full_w/2 + BASE_UNIT/2, 0, _full_h/2 - BASE_UNIT/2])
+        cuboid(_notch_size, chamfer=_cham);
 
+    if(notch_top_right && pins_top && pins_right)
+      translate([_full_w/2 - BASE_UNIT/2, 0, _full_h/2 - BASE_UNIT/2])
+        cuboid(_notch_size, chamfer=_cham);
 
-      translate([panel_width / 2 - BASE_UNIT / 2, 0, 0])
-        zcopies(spacing=BASE_UNIT, n=_n_side)
-          xrot(90) lock_pin_hole();
-    }
+    if(notch_bottom_left && pins_bottom && pins_left)
+      translate([-_full_w/2 + BASE_UNIT/2, 0, -_full_h/2 + BASE_UNIT/2])
+        cuboid(_notch_size, chamfer=_cham);
 
-
-    if(connector_notch) {
-      _notch_size = [BASE_UNIT + 3, panel_thickness + EPSILON*2, BASE_UNIT + 3];
-
-      translate([-panel_width/2 + BASE_UNIT/2, 0, panel_height/2 - BASE_UNIT/2])
-        cuboid(_notch_size);
-
-      translate([panel_width/2 - BASE_UNIT/2, 0, panel_height/2 - BASE_UNIT/2])
-        cuboid(_notch_size);
-
-      translate([-panel_width/2 + BASE_UNIT/2, 0, -panel_height/2 + BASE_UNIT/2])
-        cuboid(_notch_size);
-
-      translate([panel_width/2 - BASE_UNIT/2, 0, -panel_height/2 + BASE_UNIT/2])
-        cuboid(_notch_size);
-    }
+    if(notch_bottom_right && pins_bottom && pins_right)
+      translate([_full_w/2 - BASE_UNIT/2, 0, -_full_h/2 + BASE_UNIT/2])
+        cuboid(_notch_size, chamfer=_cham);
   }
 }
 blank_panel();
