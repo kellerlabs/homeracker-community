@@ -17,9 +17,10 @@ Plan, visualize, and build your HomeRacker setup with the interactive 3D configu
 
 ## Community Models
 
-|                                                                                                                                     |                                                                                                                                            |
-| :---------------------------------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------: |
-| [![Keystone Patch Panel](models/patch_panel/preview.png)](models/patch_panel/) <br> **[Keystone Patch Panel](models/patch_panel/)** | [![Temp Locking Pin](models/temp_locking_pin/preview.png)](models/temp_locking_pin/) <br> **[Temp Locking Pin](models/temp_locking_pin/)** |
+|                                                                                                                                     |                                                                                                                                                           |
+| :---------------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| [![Keystone Patch Panel](models/patch_panel/preview.png)](models/patch_panel/) <br> **[Keystone Patch Panel](models/patch_panel/)** |        [![Temp Locking Pin](models/temp_locking_pin/preview.png)](models/temp_locking_pin/) <br> **[Temp Locking Pin](models/temp_locking_pin/)**         |
+|          [![Blank Panel](models/blank_panel/preview.png)](models/blank_panel/) <br> **[Blank Panel](models/blank_panel/)**          | [![Rackmount Ears](models/rackmount_ears/preview.png)](models/rackmount_ears/) <br> **[Rackmount Ears (homeracker pin edition)](models/rackmount_ears/)** |
 
 
 ## Contributing
