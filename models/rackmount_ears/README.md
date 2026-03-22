@@ -2,7 +2,7 @@
 
 ![Preview](preview.png)
 
-Rackmount ears that use HomeRacker square holes and lock pins instead of traditional oval cage-bolt holes. Based on the [rackmount ears from the core HomeRacker repo](https://github.com/kellerlabs/homeracker/models/rackmount_ears), but adapted to mount with HomeRacker lock pins for a tool-free, modular connection.
+Rackmount ears that use HomeRacker square holes and lock pins instead of traditional oval cage-bolt holes. Based on the [rackmount ears from the core HomeRacker repo](https://github.com/kellerlabs/homeracker/tree/main/models/rackmount_ears), but adapted to mount with HomeRacker lock pins for a tool-free, modular connection.
 
 ## Design
 
