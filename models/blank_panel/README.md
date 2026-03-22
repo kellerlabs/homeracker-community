@@ -2,13 +2,14 @@
 
 ![Preview](preview.png)
 
-A parametric vanity panel for the HomeRacker system. Covers unused spaces in the rack with a clean flat panel. Sized by HomeRacker peg units with optional lock pin cutouts on all edges for mounting.
+A parametric vanity panel for the HomeRacker system. Covers unused spaces in the rack with a clean flat panel. Sized by HomeRacker peg units with optional lock pin mounting tabs on each edge independently.
 
 ## Design
 
-- **Panel slab** — Flat chamfered plate sized to the HomeRacker 15mm grid.
-- **Lock pin cutouts** — Optional holes on all four edges spaced at BASE_UNIT intervals for secure mounting with lock pins.
-- **Corner notches** — Optional cutouts at corners to fit around HomeRacker connectors.
+- **Panel slab** — Flat plate sized to the HomeRacker 15mm grid. The `width_units` and `height_units` define the core panel area.
+- **Mounting tabs** — Each edge can independently have a lock pin mounting tab (one BASE_UNIT / 15mm wide) with square lock pin holes for secure mounting.
+- **Corner notches** — Per-corner cutouts to fit around HomeRacker connectors, with chamfered inner edges.
+- **Chamfer** — Optional edge chamfer on the panel and notch inner corners.
 
 ## Parameters
 
@@ -19,13 +20,29 @@ A parametric vanity panel for the HomeRacker system. Covers unused spaces in the
 | `width_units`     | 6       | Panel width in HomeRacker peg units (1 unit = 15mm)  |
 | `height_units`    | 4       | Panel height in HomeRacker peg units (1 unit = 15mm) |
 | `panel_thickness` | 2 mm    | Panel thickness                                      |
+| `chamfer`         | true    | Chamfer panel edges                                  |
 
-### Cutouts
+### Mounting
 
-| Parameter         | Default | Description                                       |
-| ----------------- | ------- | ------------------------------------------------- |
-| `cutouts`         | true    | Enable lock pin holes on all edges                |
-| `connector_notch` | true    | Notch corners to fit around HomeRacker connectors |
+| Parameter      | Default | Description                              |
+| -------------- | ------- | ---------------------------------------- |
+| `pins_top`     | true    | Enable lock pin mounting tab on top edge    |
+| `pins_bottom`  | true    | Enable lock pin mounting tab on bottom edge |
+| `pins_left`    | true    | Enable lock pin mounting tab on left edge   |
+| `pins_right`   | true    | Enable lock pin mounting tab on right edge  |
+
+Disabling pins on an edge removes the entire mounting tab (15mm strip) on that side, reducing the overall panel dimensions.
+
+### Corner Notches
+
+| Parameter            | Default | Description                                       |
+| -------------------- | ------- | ------------------------------------------------- |
+| `notch_top_left`     | true    | Notch top-left corner for HomeRacker connectors   |
+| `notch_top_right`    | true    | Notch top-right corner                            |
+| `notch_bottom_left`  | true    | Notch bottom-left corner                          |
+| `notch_bottom_right` | true    | Notch bottom-right corner                         |
+
+Corner notches are only applied where both adjacent mounting tabs are enabled.
 
 ## Dependencies
 

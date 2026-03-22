@@ -116,23 +116,25 @@ module blank_panel() {
 
     // Corner notches for HomeRacker connectors
     // Only applied where both adjacent tabs exist
+    // Chamfer only the inner Y-edge (concave corner) so the cut gets a 45° fill,
+    // not the outer edges which would create protrusions.
     _notch_size = [BASE_UNIT + 3, _cut_d, BASE_UNIT + 3];
 
     if(notch_top_left && pins_top && pins_left)
       translate([-_full_w/2 + BASE_UNIT/2, 0, _full_h/2 - BASE_UNIT/2])
-        cuboid(_notch_size, chamfer=_cham);
+        cuboid(_notch_size, chamfer=_cham, edges=[RIGHT+BOT]);
 
     if(notch_top_right && pins_top && pins_right)
       translate([_full_w/2 - BASE_UNIT/2, 0, _full_h/2 - BASE_UNIT/2])
-        cuboid(_notch_size, chamfer=_cham);
+        cuboid(_notch_size, chamfer=_cham, edges=[LEFT+BOT]);
 
     if(notch_bottom_left && pins_bottom && pins_left)
       translate([-_full_w/2 + BASE_UNIT/2, 0, -_full_h/2 + BASE_UNIT/2])
-        cuboid(_notch_size, chamfer=_cham);
+        cuboid(_notch_size, chamfer=_cham, edges=[RIGHT+TOP]);
 
     if(notch_bottom_right && pins_bottom && pins_right)
       translate([_full_w/2 - BASE_UNIT/2, 0, -_full_h/2 + BASE_UNIT/2])
-        cuboid(_notch_size, chamfer=_cham);
+        cuboid(_notch_size, chamfer=_cham, edges=[LEFT+TOP]);
   }
 }
 
