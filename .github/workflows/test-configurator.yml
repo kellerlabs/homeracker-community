@@ -1,0 +1,41 @@
+name: Test Configurator
+
+on:
+  pull_request:
+    paths:
+      - "configurator/**"
+      - ".github/workflows/test-configurator.yml"
+  push:
+    branches: [main]
+    paths:
+      - "configurator/**"
+      - ".github/workflows/test-configurator.yml"
+
+jobs:
+  test-e2e:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: configurator
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install
+
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run e2e tests
+        run: bun run test:e2e
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: configurator/test-results/
+          retention-days: 7
