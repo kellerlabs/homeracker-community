@@ -22,6 +22,7 @@ A parametric vanity panel for the HomeRacker system. Covers unused spaces in the
 | `panel_thickness` | 2 mm    | Panel thickness                                      |
 | `chamfer`         | true    | Chamfer panel edges                                  |
 | `notch_clearance` | 2 mm    | Extra clearance around corner notches                |
+| `edge_clearance`  | 2 mm    | Extra clearance on edges where tabs are disabled     |
 
 ### Mounting
 

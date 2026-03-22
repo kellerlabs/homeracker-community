@@ -11,6 +11,8 @@ panel_thickness = 2; // [1:0.5:5]
 chamfer = true;
 // Extra clearance around corner notches in mm
 notch_clearance = 2; // [0:0.10:10]
+// Extra clearance on edges where mounting tabs are disabled in mm
+edge_clearance = 2; // [0:0.10:10]
 
 
 /* [Mounting] */
@@ -145,45 +147,42 @@ module blank_panel() {
 
 
 
-    _ec = notch_clearance;
 
+    _strip = BASE_UNIT + edge_clearance;
 
-
-    _corner_w = BASE_UNIT + _ec;
-    _corner_h = BASE_UNIT + _ec;
 
     if(!pins_top || !pins_left)
-      translate([-_full_w/2 + _corner_w/2 - _ec/2, 0, _full_h/2 - _corner_h/2 + _ec/2])
-        cuboid([_corner_w, _cut_d, _corner_h]);
+      translate([-_full_w/2 + _strip/2, 0, _full_h/2 - _strip/2])
+        cuboid([_strip, _cut_d, _strip]);
 
     if(!pins_top || !pins_right)
-      translate([_full_w/2 - _corner_w/2 + _ec/2, 0, _full_h/2 - _corner_h/2 + _ec/2])
-        cuboid([_corner_w, _cut_d, _corner_h]);
+      translate([_full_w/2 - _strip/2, 0, _full_h/2 - _strip/2])
+        cuboid([_strip, _cut_d, _strip]);
 
     if(!pins_bottom || !pins_left)
-      translate([-_full_w/2 + _corner_w/2 - _ec/2, 0, -_full_h/2 + _corner_h/2 - _ec/2])
-        cuboid([_corner_w, _cut_d, _corner_h]);
+      translate([-_full_w/2 + _strip/2, 0, -_full_h/2 + _strip/2])
+        cuboid([_strip, _cut_d, _strip]);
 
     if(!pins_bottom || !pins_right)
-      translate([_full_w/2 - _corner_w/2 + _ec/2, 0, -_full_h/2 + _corner_h/2 - _ec/2])
-        cuboid([_corner_w, _cut_d, _corner_h]);
+      translate([_full_w/2 - _strip/2, 0, -_full_h/2 + _strip/2])
+        cuboid([_strip, _cut_d, _strip]);
 
 
     if(!pins_top)
-      translate([0, 0, _full_h/2 - (BASE_UNIT + _ec)/2 + _ec/2])
-        cuboid([_core_w + EPSILON, _cut_d, BASE_UNIT + _ec]);
+      translate([0, 0, _full_h/2 - _strip/2])
+        cuboid([_core_w + EPSILON, _cut_d, _strip]);
 
     if(!pins_bottom)
-      translate([0, 0, -_full_h/2 + (BASE_UNIT + _ec)/2 - _ec/2])
-        cuboid([_core_w + EPSILON, _cut_d, BASE_UNIT + _ec]);
+      translate([0, 0, -_full_h/2 + _strip/2])
+        cuboid([_core_w + EPSILON, _cut_d, _strip]);
 
     if(!pins_left)
-      translate([-_full_w/2 + (BASE_UNIT + _ec)/2 - _ec/2, 0, 0])
-        cuboid([BASE_UNIT + _ec, _cut_d, _core_h + EPSILON]);
+      translate([-_full_w/2 + _strip/2, 0, 0])
+        cuboid([_strip, _cut_d, _core_h + EPSILON]);
 
     if(!pins_right)
-      translate([_full_w/2 - (BASE_UNIT + _ec)/2 + _ec/2, 0, 0])
-        cuboid([BASE_UNIT + _ec, _cut_d, _core_h + EPSILON]);
+      translate([_full_w/2 - _strip/2, 0, 0])
+        cuboid([_strip, _cut_d, _core_h + EPSILON]);
 
 
 

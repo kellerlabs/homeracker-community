@@ -13,6 +13,8 @@ panel_thickness = 2; // [1:0.5:5]
 chamfer = true;
 // Extra clearance around corner notches in mm
 notch_clearance = 2; // [0:0.10:10]
+// Extra clearance on edges where mounting tabs are disabled in mm
+edge_clearance = 2; // [0:0.10:10]
 
 /* [Mounting] */
 // Enable lock pin mounting tab on top edge
@@ -65,46 +67,43 @@ module blank_panel() {
     cuboid([_full_w, panel_thickness, _full_h], chamfer=_cham);
 
     // Remove corners and edge strips where tabs are disabled.
-    // Add notch_clearance inward so the panel edge clears adjacent parts.
-    _ec = notch_clearance;  // edge clearance
+    // Strip is BASE_UNIT + clearance wide, anchored at the panel edge,
+    // so the core panel shrinks by notch_clearance on each disabled side.
+    _strip = BASE_UNIT + edge_clearance;
 
     // Corner removal (where either adjacent tab is disabled)
-    // Each corner cutter extends _ec past the tab boundary into the core
-    _corner_w = BASE_UNIT + _ec;
-    _corner_h = BASE_UNIT + _ec;
-
     if(!pins_top || !pins_left)
-      translate([-_full_w/2 + _corner_w/2 - _ec/2, 0, _full_h/2 - _corner_h/2 + _ec/2])
-        cuboid([_corner_w, _cut_d, _corner_h]);
+      translate([-_full_w/2 + _strip/2, 0, _full_h/2 - _strip/2])
+        cuboid([_strip, _cut_d, _strip]);
 
     if(!pins_top || !pins_right)
-      translate([_full_w/2 - _corner_w/2 + _ec/2, 0, _full_h/2 - _corner_h/2 + _ec/2])
-        cuboid([_corner_w, _cut_d, _corner_h]);
+      translate([_full_w/2 - _strip/2, 0, _full_h/2 - _strip/2])
+        cuboid([_strip, _cut_d, _strip]);
 
     if(!pins_bottom || !pins_left)
-      translate([-_full_w/2 + _corner_w/2 - _ec/2, 0, -_full_h/2 + _corner_h/2 - _ec/2])
-        cuboid([_corner_w, _cut_d, _corner_h]);
+      translate([-_full_w/2 + _strip/2, 0, -_full_h/2 + _strip/2])
+        cuboid([_strip, _cut_d, _strip]);
 
     if(!pins_bottom || !pins_right)
-      translate([_full_w/2 - _corner_w/2 + _ec/2, 0, -_full_h/2 + _corner_h/2 - _ec/2])
-        cuboid([_corner_w, _cut_d, _corner_h]);
+      translate([_full_w/2 - _strip/2, 0, -_full_h/2 + _strip/2])
+        cuboid([_strip, _cut_d, _strip]);
 
-    // Edge strip removal (extends _ec past the tab into the core)
+    // Edge strip removal
     if(!pins_top)
-      translate([0, 0, _full_h/2 - (BASE_UNIT + _ec)/2 + _ec/2])
-        cuboid([_core_w + EPSILON, _cut_d, BASE_UNIT + _ec]);
+      translate([0, 0, _full_h/2 - _strip/2])
+        cuboid([_core_w + EPSILON, _cut_d, _strip]);
 
     if(!pins_bottom)
-      translate([0, 0, -_full_h/2 + (BASE_UNIT + _ec)/2 - _ec/2])
-        cuboid([_core_w + EPSILON, _cut_d, BASE_UNIT + _ec]);
+      translate([0, 0, -_full_h/2 + _strip/2])
+        cuboid([_core_w + EPSILON, _cut_d, _strip]);
 
     if(!pins_left)
-      translate([-_full_w/2 + (BASE_UNIT + _ec)/2 - _ec/2, 0, 0])
-        cuboid([BASE_UNIT + _ec, _cut_d, _core_h + EPSILON]);
+      translate([-_full_w/2 + _strip/2, 0, 0])
+        cuboid([_strip, _cut_d, _core_h + EPSILON]);
 
     if(!pins_right)
-      translate([_full_w/2 - (BASE_UNIT + _ec)/2 + _ec/2, 0, 0])
-        cuboid([BASE_UNIT + _ec, _cut_d, _core_h + EPSILON]);
+      translate([_full_w/2 - _strip/2, 0, 0])
+        cuboid([_strip, _cut_d, _core_h + EPSILON]);
 
     // Lock pin holes on each enabled edge
     // Top/bottom span full width; left/right span full height
