@@ -21,6 +21,7 @@ A parametric vanity panel for the HomeRacker system. Covers unused spaces in the
 | `height_units`    | 4       | Panel height in HomeRacker peg units (1 unit = 15mm) |
 | `panel_thickness` | 2 mm    | Panel thickness                                      |
 | `chamfer`         | true    | Chamfer panel edges                                  |
+| `notch_clearance` | 2 mm    | Extra clearance around corner notches                |
 
 ### Mounting
 
@@ -35,14 +36,20 @@ Disabling pins on an edge removes the entire mounting tab (15mm strip) on that s
 
 ### Corner Notches
 
-| Parameter            | Default | Description                                       |
-| -------------------- | ------- | ------------------------------------------------- |
-| `notch_top_left`     | true    | Notch top-left corner for HomeRacker connectors   |
-| `notch_top_right`    | true    | Notch top-right corner                            |
-| `notch_bottom_left`  | true    | Notch bottom-left corner                          |
-| `notch_bottom_right` | true    | Notch bottom-right corner                         |
+Each corner notch has independent width (W) and height (H) in units. W removes holes from the horizontal tab (top/bottom), H removes holes from the vertical tab (left/right). Set to 0 to disable.
 
-Corner notches are only applied where both adjacent mounting tabs are enabled.
+| Parameter              | Default | Description                                          |
+| ---------------------- | ------- | ---------------------------------------------------- |
+| `notch_top_left_w`     | 1       | Top-left: holes to remove from top tab               |
+| `notch_top_left_h`     | 1       | Top-left: holes to remove from left tab              |
+| `notch_top_right_w`    | 1       | Top-right: holes to remove from top tab              |
+| `notch_top_right_h`    | 1       | Top-right: holes to remove from right tab            |
+| `notch_bottom_left_w`  | 1       | Bottom-left: holes to remove from bottom tab         |
+| `notch_bottom_left_h`  | 1       | Bottom-left: holes to remove from left tab           |
+| `notch_bottom_right_w` | 1       | Bottom-right: holes to remove from bottom tab        |
+| `notch_bottom_right_h` | 1       | Bottom-right: holes to remove from right tab         |
+
+W and H are independent — the W cut only requires the horizontal tab to exist, and H only requires the vertical tab. Notches cut into the mounting tab strips only, never the core panel. Use `notch_clearance` to add extra room around connectors.
 
 ## Dependencies
 

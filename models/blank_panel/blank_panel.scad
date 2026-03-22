@@ -11,6 +11,8 @@ height_units = 4; // [1:24]
 panel_thickness = 2; // [1:0.5:5]
 // Chamfer panel edges
 chamfer = true;
+// Extra clearance around corner notches in mm
+notch_clearance = 2; // [0:0.10:10]
 
 /* [Mounting] */
 // Enable lock pin mounting tab on top edge
@@ -23,14 +25,22 @@ pins_left = true;
 pins_right = true;
 
 /* [Corner Notches] */
-// Notch top-left corner to fit around HomeRacker connectors
-notch_top_left = true;
-// Notch top-right corner
-notch_top_right = true;
-// Notch bottom-left corner
-notch_bottom_left = true;
-// Notch bottom-right corner
-notch_bottom_right = true;
+// Top-left notch width in units (0 = no notch)
+notch_top_left_w = 1; // [0:1:12]
+// Top-left notch height in units (0 = no notch)
+notch_top_left_h = 1; // [0:1:12]
+// Top-right notch width in units (0 = no notch)
+notch_top_right_w = 1; // [0:1:12]
+// Top-right notch height in units (0 = no notch)
+notch_top_right_h = 1; // [0:1:12]
+// Bottom-left notch width in units (0 = no notch)
+notch_bottom_left_w = 1; // [0:1:12]
+// Bottom-left notch height in units (0 = no notch)
+notch_bottom_left_h = 1; // [0:1:12]
+// Bottom-right notch width in units (0 = no notch)
+notch_bottom_right_w = 1; // [0:1:12]
+// Bottom-right notch height in units (0 = no notch)
+notch_bottom_right_h = 1; // [0:1:12]
 
 /* [Hidden] */
 $fn = 100;
@@ -54,43 +64,47 @@ module blank_panel() {
     color(HR_RED)
     cuboid([_full_w, panel_thickness, _full_h], chamfer=_cham);
 
-    // Remove corners where either adjacent tab is disabled
-    // Top-left corner
+    // Remove corners and edge strips where tabs are disabled.
+    // Add notch_clearance inward so the panel edge clears adjacent parts.
+    _ec = notch_clearance;  // edge clearance
+
+    // Corner removal (where either adjacent tab is disabled)
+    // Each corner cutter extends _ec past the tab boundary into the core
+    _corner_w = BASE_UNIT + _ec;
+    _corner_h = BASE_UNIT + _ec;
+
     if(!pins_top || !pins_left)
-      translate([-_full_w/2 + BASE_UNIT/2, 0, _full_h/2 - BASE_UNIT/2])
-        cuboid([BASE_UNIT + EPSILON, _cut_d, BASE_UNIT + EPSILON]);
+      translate([-_full_w/2 + _corner_w/2 - _ec/2, 0, _full_h/2 - _corner_h/2 + _ec/2])
+        cuboid([_corner_w, _cut_d, _corner_h]);
 
-    // Top-right corner
     if(!pins_top || !pins_right)
-      translate([_full_w/2 - BASE_UNIT/2, 0, _full_h/2 - BASE_UNIT/2])
-        cuboid([BASE_UNIT + EPSILON, _cut_d, BASE_UNIT + EPSILON]);
+      translate([_full_w/2 - _corner_w/2 + _ec/2, 0, _full_h/2 - _corner_h/2 + _ec/2])
+        cuboid([_corner_w, _cut_d, _corner_h]);
 
-    // Bottom-left corner
     if(!pins_bottom || !pins_left)
-      translate([-_full_w/2 + BASE_UNIT/2, 0, -_full_h/2 + BASE_UNIT/2])
-        cuboid([BASE_UNIT + EPSILON, _cut_d, BASE_UNIT + EPSILON]);
+      translate([-_full_w/2 + _corner_w/2 - _ec/2, 0, -_full_h/2 + _corner_h/2 - _ec/2])
+        cuboid([_corner_w, _cut_d, _corner_h]);
 
-    // Bottom-right corner
     if(!pins_bottom || !pins_right)
-      translate([_full_w/2 - BASE_UNIT/2, 0, -_full_h/2 + BASE_UNIT/2])
-        cuboid([BASE_UNIT + EPSILON, _cut_d, BASE_UNIT + EPSILON]);
+      translate([_full_w/2 - _corner_w/2 + _ec/2, 0, -_full_h/2 + _corner_h/2 - _ec/2])
+        cuboid([_corner_w, _cut_d, _corner_h]);
 
-    // Remove full edge strips where tabs are disabled
+    // Edge strip removal (extends _ec past the tab into the core)
     if(!pins_top)
-      translate([0, 0, _full_h/2 - BASE_UNIT/2])
-        cuboid([_core_w + EPSILON, _cut_d, BASE_UNIT + EPSILON]);
+      translate([0, 0, _full_h/2 - (BASE_UNIT + _ec)/2 + _ec/2])
+        cuboid([_core_w + EPSILON, _cut_d, BASE_UNIT + _ec]);
 
     if(!pins_bottom)
-      translate([0, 0, -_full_h/2 + BASE_UNIT/2])
-        cuboid([_core_w + EPSILON, _cut_d, BASE_UNIT + EPSILON]);
+      translate([0, 0, -_full_h/2 + (BASE_UNIT + _ec)/2 - _ec/2])
+        cuboid([_core_w + EPSILON, _cut_d, BASE_UNIT + _ec]);
 
     if(!pins_left)
-      translate([-_full_w/2 + BASE_UNIT/2, 0, 0])
-        cuboid([BASE_UNIT + EPSILON, _cut_d, _core_h + EPSILON]);
+      translate([-_full_w/2 + (BASE_UNIT + _ec)/2 - _ec/2, 0, 0])
+        cuboid([BASE_UNIT + _ec, _cut_d, _core_h + EPSILON]);
 
     if(!pins_right)
-      translate([_full_w/2 - BASE_UNIT/2, 0, 0])
-        cuboid([BASE_UNIT + EPSILON, _cut_d, _core_h + EPSILON]);
+      translate([_full_w/2 - (BASE_UNIT + _ec)/2 + _ec/2, 0, 0])
+        cuboid([BASE_UNIT + _ec, _cut_d, _core_h + EPSILON]);
 
     // Lock pin holes on each enabled edge
     // Top/bottom span full width; left/right span full height
@@ -115,26 +129,43 @@ module blank_panel() {
           xrot(90) lock_pin_hole();
 
     // Corner notches for HomeRacker connectors
-    // Only applied where both adjacent tabs exist
-    // Chamfer only the inner Y-edge (concave corner) so the cut gets a 45° fill,
-    // not the outer edges which would create protrusions.
-    _notch_size = [BASE_UNIT + 3, _cut_d, BASE_UNIT + 3];
+    // Each notch removes pin holes from the adjacent tabs (L-shaped cut along
+    // the tab strips), without cutting into the core panel area.
+    // W = how many holes to remove from the horizontal tab
+    // H = how many holes to remove from the vertical tab
+    _nc = notch_clearance;
 
-    if(notch_top_left && pins_top && pins_left)
-      translate([-_full_w/2 + BASE_UNIT/2, 0, _full_h/2 - BASE_UNIT/2])
-        cuboid(_notch_size, chamfer=_cham, edges=[RIGHT+BOT]);
+    // Top-left notch: W cuts from top tab (needs pins_top), H cuts from left tab (needs pins_left)
+    if(notch_top_left_w > 0 && pins_top)
+      translate([-_full_w/2 + notch_top_left_w * BASE_UNIT/2, 0, _full_h/2 - BASE_UNIT/2])
+        cuboid([notch_top_left_w * BASE_UNIT + _nc, _cut_d, BASE_UNIT + _nc]);
+    if(notch_top_left_h > 0 && pins_left)
+      translate([-_full_w/2 + BASE_UNIT/2, 0, _full_h/2 - notch_top_left_h * BASE_UNIT/2])
+        cuboid([BASE_UNIT + _nc, _cut_d, notch_top_left_h * BASE_UNIT + _nc]);
 
-    if(notch_top_right && pins_top && pins_right)
-      translate([_full_w/2 - BASE_UNIT/2, 0, _full_h/2 - BASE_UNIT/2])
-        cuboid(_notch_size, chamfer=_cham, edges=[LEFT+BOT]);
+    // Top-right notch: W cuts from top tab (needs pins_top), H cuts from right tab (needs pins_right)
+    if(notch_top_right_w > 0 && pins_top)
+      translate([_full_w/2 - notch_top_right_w * BASE_UNIT/2, 0, _full_h/2 - BASE_UNIT/2])
+        cuboid([notch_top_right_w * BASE_UNIT + _nc, _cut_d, BASE_UNIT + _nc]);
+    if(notch_top_right_h > 0 && pins_right)
+      translate([_full_w/2 - BASE_UNIT/2, 0, _full_h/2 - notch_top_right_h * BASE_UNIT/2])
+        cuboid([BASE_UNIT + _nc, _cut_d, notch_top_right_h * BASE_UNIT + _nc]);
 
-    if(notch_bottom_left && pins_bottom && pins_left)
-      translate([-_full_w/2 + BASE_UNIT/2, 0, -_full_h/2 + BASE_UNIT/2])
-        cuboid(_notch_size, chamfer=_cham, edges=[RIGHT+TOP]);
+    // Bottom-left notch: W cuts from bottom tab (needs pins_bottom), H cuts from left tab (needs pins_left)
+    if(notch_bottom_left_w > 0 && pins_bottom)
+      translate([-_full_w/2 + notch_bottom_left_w * BASE_UNIT/2, 0, -_full_h/2 + BASE_UNIT/2])
+        cuboid([notch_bottom_left_w * BASE_UNIT + _nc, _cut_d, BASE_UNIT + _nc]);
+    if(notch_bottom_left_h > 0 && pins_left)
+      translate([-_full_w/2 + BASE_UNIT/2, 0, -_full_h/2 + notch_bottom_left_h * BASE_UNIT/2])
+        cuboid([BASE_UNIT + _nc, _cut_d, notch_bottom_left_h * BASE_UNIT + _nc]);
 
-    if(notch_bottom_right && pins_bottom && pins_right)
-      translate([_full_w/2 - BASE_UNIT/2, 0, -_full_h/2 + BASE_UNIT/2])
-        cuboid(_notch_size, chamfer=_cham, edges=[LEFT+TOP]);
+    // Bottom-right notch: W cuts from bottom tab (needs pins_bottom), H cuts from right tab (needs pins_right)
+    if(notch_bottom_right_w > 0 && pins_bottom)
+      translate([_full_w/2 - notch_bottom_right_w * BASE_UNIT/2, 0, -_full_h/2 + BASE_UNIT/2])
+        cuboid([notch_bottom_right_w * BASE_UNIT + _nc, _cut_d, BASE_UNIT + _nc]);
+    if(notch_bottom_right_h > 0 && pins_right)
+      translate([_full_w/2 - BASE_UNIT/2, 0, -_full_h/2 + notch_bottom_right_h * BASE_UNIT/2])
+        cuboid([BASE_UNIT + _nc, _cut_d, notch_bottom_right_h * BASE_UNIT + _nc]);
   }
 }
 
