@@ -17,6 +17,7 @@ EXPORT_PATHS=(
     "models/temp_locking_pin/temp_pin.scad"
     "models/patch_panel/patch_panel.scad"
     "models/blank_panel/blank_panel.scad"
+    "models/rackmount_ears/rackmount_ears_homeracker.scad"
 )
 
 if [ ${#EXPORT_PATHS[@]} -eq 0 ]; then

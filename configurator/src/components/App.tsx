@@ -5,9 +5,10 @@ import { Toolbar } from "./Toolbar";
 import { BOMPanel } from "./BOMPanel";
 import { AssemblyState } from "../assembly/AssemblyState";
 import { HistoryManager, type Command } from "../assembly/HistoryManager";
-import type { InteractionMode, GridPosition, PlacedPart, Axis, Rotation3, ClipboardData } from "../types";
+import type { InteractionMode, GridPosition, PlacedPart, Axis, Rotation3, RotationStep, ClipboardData } from "../types";
+import { getPartDefinition } from "../data/catalog";
 import { findBestSnap, findSnapPoints, findBestConnectorSnap, findConnectorSnapPoints, computeAutoRotation } from "../assembly/snap";
-import { computeGroundLift } from "../assembly/grid-utils";
+import { computeGroundLift, nextOrientation } from "../assembly/grid-utils";
 import { detectCollidingPartIds, detectCollidingPartIdsMesh } from "../assembly/collision";
 import { restoreCustomParts, importModelFile, isCustomPart, getEmbeddedCustomParts, restoreEmbeddedCustomParts } from "../data/custom-parts";
 import { encodeAssemblyToHash, decodeAssemblyFromHash, hasCustomParts } from "../sharing/url-sharing";
@@ -312,6 +313,130 @@ export function App() {
         const match = allParts.find(
           (ap) => ap.definitionId === p.def &&
             ap.position[0] === newPos[0] && ap.position[1] === newPos[1] && ap.position[2] === newPos[2]
+        );
+        if (match) newIds.add(match.instanceId);
+      }
+      setSelectedPartIds(newIds);
+    },
+    [selectedPartIds]
+  );
+
+  const nextStep = (step: RotationStep): RotationStep =>
+    step === 0 ? 90 : step === 90 ? 180 : step === 180 ? 270 : 0;
+
+  const handleRotateSelectedParts = useCallback(
+    (axis: 0 | 1 | 2) => {
+      if (selectedPartIds.size === 0) return;
+
+      const partsToRotate: { id: string; def: string; pos: GridPosition; oldRot: Rotation3; orient?: Axis; color?: string }[] = [];
+      for (const id of selectedPartIds) {
+        const part = assembly.getPartById(id);
+        if (!part) continue;
+        partsToRotate.push({
+          id,
+          def: part.definitionId,
+          pos: part.position,
+          oldRot: part.rotation,
+          orient: part.orientation,
+          color: part.color,
+        });
+      }
+      if (partsToRotate.length === 0) return;
+
+      const cmd: Command = {
+        description: `Rotate ${partsToRotate.length} part(s)`,
+        execute() {
+          for (const p of partsToRotate) assembly.removePart(p.id);
+          for (const p of partsToRotate) {
+            const newRot: Rotation3 = [...p.oldRot];
+            newRot[axis] = nextStep(newRot[axis]);
+            assembly.addPart(p.def, p.pos, newRot, p.orient, p.color);
+          }
+        },
+        undo() {
+          const allParts = assembly.getAllParts();
+          for (const p of partsToRotate) {
+            const newRot: Rotation3 = [...p.oldRot];
+            newRot[axis] = nextStep(newRot[axis]);
+            const match = allParts.find(
+              (ap) => ap.definitionId === p.def &&
+                ap.position[0] === p.pos[0] && ap.position[1] === p.pos[1] && ap.position[2] === p.pos[2] &&
+                ap.rotation[0] === newRot[0] && ap.rotation[1] === newRot[1] && ap.rotation[2] === newRot[2]
+            );
+            if (match) assembly.removePart(match.instanceId);
+          }
+          for (const p of partsToRotate) assembly.addPart(p.def, p.pos, p.oldRot, p.orient, p.color);
+        },
+      };
+      history.execute(cmd);
+      // Re-select rotated parts (they get new IDs after remove+add)
+      const allParts = assembly.getAllParts();
+      const newIds = new Set<string>();
+      for (const p of partsToRotate) {
+        const newRot: Rotation3 = [...p.oldRot];
+        newRot[axis] = nextStep(newRot[axis]);
+        const match = allParts.find(
+          (ap) => ap.definitionId === p.def &&
+            ap.position[0] === p.pos[0] && ap.position[1] === p.pos[1] && ap.position[2] === p.pos[2] &&
+            ap.rotation[0] === newRot[0] && ap.rotation[1] === newRot[1] && ap.rotation[2] === newRot[2]
+        );
+        if (match) newIds.add(match.instanceId);
+      }
+      setSelectedPartIds(newIds);
+    },
+    [selectedPartIds]
+  );
+
+  const handleOrientSelectedParts = useCallback(
+    () => {
+      if (selectedPartIds.size === 0) return;
+
+      const partsToOrient: { id: string; def: string; pos: GridPosition; rot: Rotation3; oldOrient: Axis; color?: string }[] = [];
+      for (const id of selectedPartIds) {
+        const part = assembly.getPartById(id);
+        if (!part) continue;
+        const def = getPartDefinition(part.definitionId);
+        if (def?.category !== "support") continue;
+        partsToOrient.push({
+          id,
+          def: part.definitionId,
+          pos: part.position,
+          rot: part.rotation,
+          oldOrient: part.orientation ?? "y",
+          color: part.color,
+        });
+      }
+      if (partsToOrient.length === 0) return;
+
+      const cmd: Command = {
+        description: `Orient ${partsToOrient.length} support(s)`,
+        execute() {
+          for (const p of partsToOrient) assembly.removePart(p.id);
+          for (const p of partsToOrient) {
+            assembly.addPart(p.def, p.pos, p.rot, nextOrientation(p.oldOrient), p.color);
+          }
+        },
+        undo() {
+          const allParts = assembly.getAllParts();
+          for (const p of partsToOrient) {
+            const match = allParts.find(
+              (ap) => ap.definitionId === p.def &&
+                ap.position[0] === p.pos[0] && ap.position[1] === p.pos[1] && ap.position[2] === p.pos[2]
+            );
+            if (match) assembly.removePart(match.instanceId);
+          }
+          for (const p of partsToOrient) assembly.addPart(p.def, p.pos, p.rot, p.oldOrient, p.color);
+        },
+      };
+      history.execute(cmd);
+      // Re-select oriented parts
+      const allParts = assembly.getAllParts();
+      const newIds = new Set<string>(selectedPartIds);
+      for (const p of partsToOrient) {
+        newIds.delete(p.id);
+        const match = allParts.find(
+          (ap) => ap.definitionId === p.def &&
+            ap.position[0] === p.pos[0] && ap.position[1] === p.pos[1] && ap.position[2] === p.pos[2]
         );
         if (match) newIds.add(match.instanceId);
       }
@@ -635,6 +760,8 @@ export function App() {
           onClickEmpty={handleClickEmpty}
           onBoxSelect={handleBoxSelect}
           onNudgeParts={handleNudgeParts}
+          onRotateSelectedParts={handleRotateSelectedParts}
+          onOrientSelectedParts={handleOrientSelectedParts}
           onDeleteSelected={handleDeleteSelected}
           onPasteParts={handlePasteParts}
           onEscape={handleEscape}
