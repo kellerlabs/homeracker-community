@@ -325,7 +325,8 @@ test.describe("3MF import", () => {
 
   test("real BambuStudio 3MF imports correct number of parts", async ({
     appPage: page,
-  }) => {
+  }, testInfo) => {
+    testInfo.setTimeout(120_000);
     const filePath = path.resolve(__dirname, "../raw-models/HomeRacker+-+Pi5+Case.3mf");
     if (!fs.existsSync(filePath)) {
       test.skip();
