@@ -1,22 +1,4 @@
-// HomeRacker Rackmount Ears - Lock Pin Variant
-//
-// Rackmount ears that use homeracker square holes + lock pins
-// instead of traditional oval cage-bolt holes. The front face
-// features a flange with square lock pin holes for integration
-// with the homeracker modular system.
-//
-// Two flange styles:
-//   "support" - 15x15mm beam-shaped flange (slides into connectors)
-//   "tab"     - Thin flat tab with square holes (overlaps with support)
-//
-// VESA mount presets:
-//   "75"     - VESA 75x75 (MIS-D 75) — M4, 75mm square
-//   "100"    - VESA 100x100 (MIS-D 100) — M4, 100mm square
-//   "200"    - VESA 200x200 (MIS-F) — M4, 200mm square
-//   "75_100" - VESA MIS-D combo — M4, both 75mm and 100mm patterns (8 holes)
-
 include <BOSL2/std.scad>
-include <homeracker/models/core/lib/constants.scad>
 
 /* [Base] */
 // Total inner rack width in mm. Set to 0 to auto-detect from rack_size (10" or 19" standard). For custom homeracker racks, set this to your actual rack width.
@@ -43,6 +25,7 @@ device_depth=0; // [0:1:500]
 // Thickness of the rackmount ear.
 strength=3;
 
+
 /* [Flange] */
 // Flange attachment style
 flange_style="tab"; // [support:Support beam (15x15mm),tab:Flat tab]
@@ -51,9 +34,11 @@ flange_depth=1; // [1:1:10]
 // Direction the flange extends from the front face
 flange_direction="outside"; // [inside:Inside (into rack),outside:Outside (toward device)]
 
+
 /* [VESA Mount] */
 // VESA mounting preset. Overrides device bore settings below when not "none".
 vesa_preset="none"; // [none:Manual bore config,75:VESA 75x75 (MIS-D 75),100:VESA 100x100 (MIS-D 100),200:VESA 200x200 (MIS-F),75_100:VESA MIS-D combo (75+100)]
+
 
 /* [Device Bores] */
 // Distance (in mm) of the device's front bores(s) to the front of the device
@@ -77,8 +62,38 @@ device_bore_rows=2;
 // If true, the device will be aligned to the center of the rackmount ear. Otherwise it will be aligned to the bottom of the rackmount ear.
 center_device_bore_alignment=false;
 
-
 /* [Hidden] */
+TOLERANCE = 0.2;
+PRINTING_LAYER_WIDTH = 0.4;
+PRINTING_LAYER_HEIGHT = 0.2;
+BASE_UNIT = 15;
+BASE_STRENGTH = 2;
+BASE_CHAMFER = 1;
+LOCKPIN_HOLE_CHAMFER = 0.8;
+LOCKPIN_HOLE_SIDE_LENGTH = 4;
+LOCKPIN_HOLE_SIDE_LENGTH_DIMENSION = [LOCKPIN_HOLE_SIDE_LENGTH, LOCKPIN_HOLE_SIDE_LENGTH];
+HR_YELLOW = "#f7b600";
+HR_BLUE = "#0056b3";
+HR_RED = "#c41e3a";
+HR_GREEN = "#2d7a2e";
+HR_CHARCOAL = "#333333";
+HR_WHITE = "#f0f0f0";
+STD_UNIT_HEIGHT = 44.45;
+STD_UNIT_DEPTH = 482.6;
+STD_WIDTH_10INCH = 254;
+STD_WIDTH_19INCH = 482.6;
+STD_MOUNT_SURFACE_WIDTH = 15.875;
+STD_RACK_BORE_DISTANCE_Z = 15.875;
+STD_RACK_BORE_DISTANCE_MARGIN_Z = 6.35;
+tolerance = TOLERANCE;
+printing_layer_width = PRINTING_LAYER_WIDTH;
+printing_layer_height = PRINTING_LAYER_HEIGHT;
+base_unit = BASE_UNIT;
+base_strength = BASE_STRENGTH;
+base_chamfer = BASE_CHAMFER;
+lockpin_hole_chamfer = LOCKPIN_HOLE_CHAMFER;
+lockpin_hole_side_length = LOCKPIN_HOLE_SIDE_LENGTH;
+lockpin_hole_side_length_dimension = LOCKPIN_HOLE_SIDE_LENGTH_DIMENSION;
 $fn=100;
 RACK_HEIGHT_UNIT=STD_UNIT_HEIGHT;
 CHAMFER=min(strength/3,0.5);
@@ -146,6 +161,27 @@ device_screw_alignment = [strength, device_screw_alignment_depth, device_screw_a
 
 // lock_pin_hole() - Bidirectional chamfered square hole for lock pins.
 // Copied from core/lib/support.scad for include-path compatibility.
+
+$fn=100;
+_vesa_min_height = _vesa_active
+    ? _vesa_spacing + 2 * max(10, device_bore_distance_bottom)
+    : 0;
+_vesa_spacing =
+    (vesa_preset == 75 || vesa_preset == "75") ? 75 :
+    (vesa_preset == 100 || vesa_preset == "100") ? 100 :
+    (vesa_preset == 200 || vesa_preset == "200") ? 200 :
+    (vesa_preset == "75_100") ? 100 : 0;
+echo("Height: ", RACK_HEIGHT);
+echo("Pin holes vertical: ", PIN_HEIGHT_UNITS);
+if (_vesa_active) echo("VESA preset: ", vesa_preset, " type: ", type(vesa_preset), " spacing: ", _vesa_spacing, " margin_v: ", eff_bore_margin_v, " margin_h: ", eff_bore_margin_h);
+device_screw_alignment_vertical=
+    eff_center_alignment ?
+        RACK_HEIGHT / 2 :
+        eff_bore_margin_v / 2 + device_bore_distance_bottom
+;
+device_screw_alignment_depth = _vesa_active
+    ? depth - 10 - _bore_half_span
+    : depth / 2;
 module lock_pin_hole() {
     lock_pin_center_side = LOCKPIN_HOLE_SIDE_LENGTH + PRINTING_LAYER_WIDTH*2;
     lock_pin_center_dimension = [lock_pin_center_side, lock_pin_center_side];
@@ -171,24 +207,21 @@ module lock_pin_hole() {
         hole_half();
     }
 }
-
-
 module base_ear(width,strength,height) {
     union() {
-        // Front face
+
         cuboid([width,strength,height],anchor=LEFT+BOTTOM+FRONT,chamfer=CHAMFER);
-        // Side face
+
         cuboid([strength,depth,height],anchor=LEFT+BOTTOM+FRONT,chamfer=CHAMFER);
     }
 }
-
 module screws_countersunk(length, diameter_head, length_head, diameter_shaft,
                           margin_v=undef, margin_h=undef, rows=undef, cols=undef) {
     _mv = is_undef(margin_v) ? eff_bore_margin_v : margin_v;
     _mh = is_undef(margin_h) ? eff_bore_margin_h : margin_h;
     _rows = is_undef(rows) ? eff_bore_rows : rows;
     _cols = is_undef(cols) ? eff_bore_columns : cols;
-    // Extend cutting geometry 0.5mm past each surface to avoid z-fighting
+
     _eps = 0.5;
     translate(device_screw_alignment + [_eps, 0, 0])
     yrot(-90)
@@ -198,11 +231,6 @@ module screws_countersunk(length, diameter_head, length_head, diameter_shaft,
         translate([0,0,length_head]) cylinder(h=length-length_head+_eps, r=diameter_shaft/2);
     }
 }
-
-
-// Support-beam-shaped flange (15x15mm cross-section).
-// Extends from the front face into the rack space.
-// Lock pin holes at every BASE_UNIT along Z for horizontal pin insertion.
 module flange_support_style(height_units, flange_units) {
     flange_h = height_units * BASE_UNIT;
     flange_d = flange_units * BASE_UNIT;
@@ -212,14 +240,14 @@ module flange_support_style(height_units, flange_units) {
                chamfer=BASE_CHAMFER,
                anchor=RIGHT+BOTTOM+BACK);
 
-        // Lock pin holes through X-axis at every BASE_UNIT along Z
+
         for (z_idx = [0 : height_units - 1]) {
             translate([-BASE_UNIT/2, -flange_d/2, z_idx * BASE_UNIT + BASE_UNIT/2])
             rotate([0, 90, 0])
             lock_pin_hole();
         }
 
-        // Lock pin holes through Y-axis at every BASE_UNIT along Z
+
         for (z_idx = [0 : height_units - 1]) {
             for (y_idx = [0 : flange_units - 1]) {
                 translate([-BASE_UNIT/2, -(y_idx * BASE_UNIT + BASE_UNIT/2), z_idx * BASE_UNIT + BASE_UNIT/2])
@@ -229,10 +257,6 @@ module flange_support_style(height_units, flange_units) {
         }
     }
 }
-
-
-// Thin flat tab flange with square lock pin holes.
-// Overlaps alongside a homeracker support; pin goes through both.
 module flange_tab_style(height_units, flange_units, ear_strength) {
     flange_h = height_units * BASE_UNIT;
     flange_d = flange_units * BASE_UNIT;
@@ -242,8 +266,8 @@ module flange_tab_style(height_units, flange_units, ear_strength) {
                chamfer=CHAMFER,
                anchor=RIGHT+BOTTOM+BACK);
 
-        // Lock pin holes through X-axis at every BASE_UNIT along Z
-        // The thin material clips the prismoid to a clean square hole
+
+
         for (z_idx = [0 : height_units - 1]) {
             for (y_idx = [0 : flange_units - 1]) {
                 translate([-ear_strength/2, -(y_idx * BASE_UNIT + BASE_UNIT/2), z_idx * BASE_UNIT + BASE_UNIT/2])
@@ -253,21 +277,18 @@ module flange_tab_style(height_units, flange_units, ear_strength) {
         }
     }
 }
-
-
-// Assemble the rackmount ear with homeracker flange
 module rackmount_ear_homeracker(asym=0){
-    // Determine effective rack width
+
     effective_rack_width = rack_width > 0 ? rack_width :
         (rack_size == 19 ? RACK_WIDTH_19_INCH : RACK_WIDTH_10_INCH_OUTER);
 
-    // Gap from device edge to rack opening edge
+
     rack_gap = (effective_rack_width - device_width) / 2 + asym;
 
-    // For tab+outside: front face extends past the rack opening to overlap with
-    // the homeracker support that sits outside the opening. Hole center is at
-    // rack_gap + BASE_UNIT/2 (aligned with support center).
-    // For other styles: ear width is just the gap + minimum for the flange.
+
+
+
+
     hole_overlap =  BASE_UNIT/2 + LOCKPIN_HOLE_SIDE_LENGTH/2 + LOCKPIN_HOLE_CHAMFER;
     min_ear_width = flange_style == "support" ? BASE_UNIT + strength :
         (flange_direction == "outside" ? hole_overlap + strength : strength * 2);
@@ -275,12 +296,12 @@ module rackmount_ear_homeracker(asym=0){
         ? max(min_ear_width, rack_gap + hole_overlap)
         : max(min_ear_width, rack_gap);
 
-    // Flange thickness for positioning
+
     flange_thick = flange_style == "support" ? BASE_UNIT : strength;
 
-    // Flange position depends on direction:
-    //   "inside"  — on front face, extending into rack (-Y), pins insert from side
-    //   "outside" — on outer edge, extending outward (+X), pins insert from front
+
+
+
     flange_x_pos = flange_direction == "inside"
         ? rack_ear_width - flange_thick/2
         : rack_ear_width + flange_depth * BASE_UNIT;
@@ -304,10 +325,10 @@ module rackmount_ear_homeracker(asym=0){
 
     difference() {
         union() {
-            // Create the base L-bracket
+
             base_ear(rack_ear_width, strength, RACK_HEIGHT);
 
-            // Create the flange (tab+outside needs no extra geometry — holes cut into front face)
+
             if (!(flange_style == "tab" && flange_direction == "outside")) {
                 translate([flange_x_pos, flange_y_pos, FLANGE_Z_OFFSET])
                 rotate([0, 0, flange_direction == "outside" ? -90 : 0])
@@ -318,13 +339,13 @@ module rackmount_ear_homeracker(asym=0){
                 }
             }
         }
-        // Create the holes for the device screws (primary pattern)
+
         screws_countersunk(length=strength,
             diameter_head=eff_bore_hole_head_diameter,
             length_head=eff_bore_hole_head_length,
             diameter_shaft=eff_bore_hole_diameter);
 
-        // VESA combo: add second set of holes at 75x75 spacing
+
         if (_vesa_has_combo) {
             screws_countersunk(length=strength,
                 diameter_head=eff_bore_hole_head_diameter,
@@ -333,8 +354,8 @@ module rackmount_ear_homeracker(asym=0){
                 margin_v=75, margin_h=75, rows=2, cols=2);
         }
 
-        // For tab+outside, cut square lock pin holes through the front face
-        // Holes aligned with homeracker support center (BASE_UNIT/2 past the rack opening edge)
+
+
         if (flange_style == "tab" && flange_direction == "outside") {
             for (z_idx = [0 : PIN_HEIGHT_UNITS]) {
                 translate([-5 + rack_gap + BASE_UNIT/2, strength/2, -7.5 + FLANGE_Z_OFFSET + z_idx * BASE_UNIT + BASE_UNIT/2])
@@ -345,17 +366,10 @@ module rackmount_ear_homeracker(asym=0){
         }
     }
 }
-
-// Ear distance
-ear_distance = show_distance ? -device_width : -LOCKPIN_HOLE_SIDE_LENGTH;
-x_mirror_plane = [1,0,0];
-
-// Render selected part(s). Export "left" and "right" separately for 3MF.
 if (part == "both" || part == "left") {
     color("yellow")
     rackmount_ear_homeracker(asymetry);
 }
-
 if (part == "both" || part == "right") {
     color("blue")
     translate([part == "both" ? ear_distance : 0, 0, 0])
