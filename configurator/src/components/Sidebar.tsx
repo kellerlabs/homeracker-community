@@ -231,14 +231,14 @@ function SubMenu({
 function Header() {
   return (
     <div className="p-4 border-b border-border shrink-0">
-      <h1 className="text-xl font-bold text-accent">HomeRacker Configurator</h1>
-      <div className="flex gap-3 mt-1.5">
+      <h1 className="text-lg font-bold text-accent">HomeRacker Configurator</h1>
+      <div className="flex gap-2.5 mt-1.5">
         <a
           href="https://github.com/kellerlabs/homeracker-community/tree/main/configurator"
           target="_blank"
           rel="noopener noreferrer"
           title="Configurator GitHub"
-          className="inline-flex items-center gap-1 text-md text-muted no-underline opacity-70 transition-opacity duration-150 hover:opacity-100"
+          className="inline-flex items-center gap-1 text-xs text-muted no-underline opacity-70 transition-opacity duration-150 hover:opacity-100"
         >
           Configurator <Github />
         </a>
@@ -247,7 +247,7 @@ function Header() {
           target="_blank"
           rel="noopener noreferrer"
           title="HomeRacker Core GitHub"
-          className="inline-flex items-center gap-1 text-md text-muted no-underline opacity-70 transition-opacity duration-150 hover:opacity-100"
+          className="inline-flex items-center gap-1 text-xs text-muted no-underline opacity-70 transition-opacity duration-150 hover:opacity-100"
         >
           HomeRacker <Github />
         </a>
