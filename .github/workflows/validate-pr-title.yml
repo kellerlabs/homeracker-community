@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate PR title
-        uses: camunda/infra-global-github-actions/teams/infra/pull-request/validate-title@83b553fe5a266710ba04c38d37db551972600429
+        uses: camunda/infra-global-github-actions/teams/infra/pull-request/validate-title@c7038d3c5dcea15896418e230bec10a25c1381e8
         with:
           # Keep in sync with .github/config/release-please-config.json changelog-sections
           types: |
