@@ -17,14 +17,14 @@
     "@react-three/fiber": "^9.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "three": "^0.172.0",
+    "three": "^0.183.0",
     "three-mesh-bvh": "^0.9.9"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@types/three": "^0.172.0",
+    "@types/three": "^0.183.0",
     "typescript": "^5.7.0"
   }
 }
