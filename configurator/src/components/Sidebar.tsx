@@ -3,7 +3,7 @@ import { PART_CATALOG } from "../data/catalog";
 import { useState, useCallback, useRef, useMemo, forwardRef } from "react";
 import { ResizableBox } from "react-resizable";
 import { PART_COLORS } from "../constants";
-import type { PartDefinition, PartCategory } from "../types";
+import type { InteractionMode, PartDefinition, PartCategory } from "../types";
 
 const SECTIONS: { key: PartCategory; label: string }[] = [
   { key: "connector", label: "Connectors" },
@@ -15,13 +15,13 @@ const SECTIONS: { key: PartCategory; label: string }[] = [
 
 const STICKY_H = 32;
 
-export default function Sidebar({
+export function Sidebar({
   onSelectPart,
   activeMode,
   usedDefinitionIds,
 }: {
   onSelectPart: (id: string) => void;
-  activeMode: any;
+  activeMode: InteractionMode;
   usedDefinitionIds: Set<string>;
 }) {
   const [activeSection, setActiveSection] = useState<PartCategory>(
