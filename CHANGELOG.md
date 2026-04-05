@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.4.0](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.3.0...homeracker-community-v0.4.0) (2026-04-05)
+
+
+### ✨ Features
+
+* parametric blank panel ([#32](https://github.com/kellerlabs/homeracker-community/issues/32)) ([e73d81d](https://github.com/kellerlabs/homeracker-community/commit/e73d81d9e21b4c0a187e8ff563dbe7ff1e9dc8fe))
+
+
+### 📦 Dependencies
+
+* update belfryscad/bosl2 digest to 385409c ([#55](https://github.com/kellerlabs/homeracker-community/issues/55)) ([601790b](https://github.com/kellerlabs/homeracker-community/commit/601790b94f56f61d80e67f09aa8d8bff5a77ddc1))
+* update belfryscad/bosl2 digest to b9c5dd7 ([#59](https://github.com/kellerlabs/homeracker-community/issues/59)) ([fa850f4](https://github.com/kellerlabs/homeracker-community/commit/fa850f4f11292b2c9992475f8da74cf81fb29c3f))
+* update camunda/infra-global-github-actions digest to 26f1373 ([#56](https://github.com/kellerlabs/homeracker-community/issues/56)) ([13b6138](https://github.com/kellerlabs/homeracker-community/commit/13b6138a3c3d715057dc78c4247f75b2db8c3776))
+* update camunda/infra-global-github-actions digest to 527a282 ([#53](https://github.com/kellerlabs/homeracker-community/issues/53)) ([6f49ced](https://github.com/kellerlabs/homeracker-community/commit/6f49ced214ad8c35f01af045c20bf5c1e31c592c))
+* update camunda/infra-global-github-actions digest to c7038d3 ([#46](https://github.com/kellerlabs/homeracker-community/issues/46)) ([3ccfac3](https://github.com/kellerlabs/homeracker-community/commit/3ccfac32c7be8556c699509cfe6f984855cf13ff))
+* update camunda/infra-global-github-actions digest to feed302 ([#52](https://github.com/kellerlabs/homeracker-community/issues/52)) ([95e927e](https://github.com/kellerlabs/homeracker-community/commit/95e927ec62bfc773fe14c1843cca8a7a2e16b4f3))
+* update dependency kellerlabs/homeracker to homeracker-v1.11.0 ([#47](https://github.com/kellerlabs/homeracker-community/issues/47)) ([7c872af](https://github.com/kellerlabs/homeracker-community/commit/7c872afbbe5f446a2ee444a1cb66f462ee9ff11e))
+* update dependency kellerlabs/homeracker to homeracker-v1.12.0 ([#58](https://github.com/kellerlabs/homeracker-community/issues/58)) ([b2987e4](https://github.com/kellerlabs/homeracker-community/commit/b2987e40dc937710c4aede48509156eec08f2a42))
+* update github actions (major) ([#50](https://github.com/kellerlabs/homeracker-community/issues/50)) ([5816c9d](https://github.com/kellerlabs/homeracker-community/commit/5816c9da82c69fb3aedda3676c7a049bb79fac02))
+* update pre-commit hook renovatebot/pre-commit-hooks to v43.104.4 ([#61](https://github.com/kellerlabs/homeracker-community/issues/61)) ([2388eba](https://github.com/kellerlabs/homeracker-community/commit/2388ebafa515454678d4aee79213e105e300839f))
+* update pre-commit hook renovatebot/pre-commit-hooks to v43.96.0 ([#48](https://github.com/kellerlabs/homeracker-community/issues/48)) ([4d80c53](https://github.com/kellerlabs/homeracker-community/commit/4d80c53e5de08b593bd86c896a4edec857636bae))
+* update pre-commit hook renovatebot/pre-commit-hooks to v43.99.0 ([#51](https://github.com/kellerlabs/homeracker-community/issues/51)) ([dea6fbc](https://github.com/kellerlabs/homeracker-community/commit/dea6fbc203abd3499cfca6f3d0899aee5a58a4de))
+* update pre-commit hook renovatebot/pre-commit-hooks to v43.99.1 ([#54](https://github.com/kellerlabs/homeracker-community/issues/54)) ([0f36f6a](https://github.com/kellerlabs/homeracker-community/commit/0f36f6a2d1d2b5c59b8364316e5f383c59da156c))
+* update pre-commit hooks ([#60](https://github.com/kellerlabs/homeracker-community/issues/60)) ([cc2c12d](https://github.com/kellerlabs/homeracker-community/commit/cc2c12dc54282acd08632bac93ca18ce5df64849))
+
 ## [0.3.0](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.2.0...homeracker-community-v0.3.0) (2026-03-22)
 
 
