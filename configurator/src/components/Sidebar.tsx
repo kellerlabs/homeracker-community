@@ -1,343 +1,275 @@
-import { useState, useSyncExternalStore, useCallback } from "react";
-import { PART_CATALOG } from "../data/catalog";
-import { PART_COLORS } from "../constants";
-import { subscribeCustomParts, getCustomPartsSnapshot, importModelFile, deleteCustomPart, deleteUnusedCustomParts, downloadCustomPart, replaceCustomPart } from "../data/custom-parts";
 import { useThumbnail } from "../thumbnails/useThumbnail";
-import type { InteractionMode, PartCategory, PartDefinition } from "../types";
+import { PART_CATALOG } from "../data/catalog";
+import { useState, useCallback, useRef, useMemo, forwardRef } from "react";
+import { ResizableBox } from "react-resizable";
+import { PART_COLORS } from "../constants";
+import type { InteractionMode, PartDefinition, PartCategory } from "../types";
+import { Github } from "../components/Icons";
 
-interface SidebarProps {
-  onSelectPart: (definitionId: string) => void;
-  activeMode: InteractionMode;
-  usedDefinitionIds: Set<string>;
-}
-
-const SECTIONS: { key: string; label: string; filter: (p: PartDefinition) => boolean }[] = [
-  { key: "connector", label: "Connectors", filter: (p) => p.category === "connector" && !p.id.includes("-pt-") && !p.id.includes("-foot") },
-  { key: "connector-pt", label: "Pull-Through", filter: (p) => p.category === "connector" && p.id.includes("-pt-") },
-  { key: "support", label: "Supports", filter: (p) => p.category === "support" },
-  { key: "connector-foot", label: "Feet", filter: (p) => p.category === "connector" && p.id.includes("-foot") && !p.id.includes("-pt-") },
-  { key: "lockpin", label: "Lock Pins", filter: (p) => p.category === "lockpin" },
+const SECTIONS: { key: PartCategory; label: string }[] = [
+  { key: "connector", label: "Connectors" },
+  { key: "support", label: "Supports" },
+  { key: "lockpin", label: "Lock Pins" },
+  { key: "other", label: "Other" },
+  { key: "custom", label: "Custom" },
 ];
 
-function getCategoryIcon(category: PartCategory): string {
-  switch (category) {
-    case "connector": return "+";
-    case "support": return "||";
-    case "other": return "3D";
-    case "custom": return "3D";
-    default: return ".";
-  }
-}
+const STICKY_H = 32;
 
-function PartButton({ part, isActive, onSelect }: { part: PartDefinition; isActive: boolean; onSelect: () => void }) {
-  const color = PART_COLORS[part.category] || PART_COLORS.custom;
-  const thumbnail = useThumbnail(part);
-  return (
-    <button
-      className={`catalog-item ${isActive ? "active" : ""}`}
-      onClick={onSelect}
-      title={part.description}
-    >
-      <div
-        className="catalog-item-preview"
-        style={{
-          backgroundColor: thumbnail ? "#d0d0d0" : color + "55",
-          borderColor: color,
-        }}
-      >
-        {thumbnail ? (
-          <img src={thumbnail} alt={part.name} className="catalog-item-thumbnail" />
-        ) : (
-          <div className="catalog-item-icon" style={{ color }}>
-            {getCategoryIcon(part.category)}
-          </div>
-        )}
-      </div>
-      <span className="catalog-item-name">{part.name}</span>
-    </button>
-  );
-}
-
-export function Sidebar({ onSelectPart, activeMode, usedDefinitionIds }: SidebarProps) {
-  const activePlaceId =
-    activeMode.type === "place" ? activeMode.definitionId : null;
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [collapsed, setCollapsed] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem("homeracker-collapsed");
-      return saved ? new Set(JSON.parse(saved)) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
-
-  // Subscribe to custom parts changes
-  const customSnapshot = useSyncExternalStore(
-    subscribeCustomParts,
-    getCustomPartsSnapshot,
+export function Sidebar({
+  onSelectPart,
+  activeMode,
+  usedDefinitionIds,
+}: {
+  onSelectPart: (id: string) => void;
+  activeMode: InteractionMode;
+  usedDefinitionIds: Set<string>;
+}) {
+  const [activeSection, setActiveSection] = useState<PartCategory>(
+    SECTIONS[0].key,
   );
 
-  const handleImportModel = useCallback(() => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".stl,.3mf";
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      try {
-        const defs = await importModelFile(file);
-        if (defs.length > 0) onSelectPart(defs[0].id);
-      } catch (err) {
-        console.error("Model import failed:", err);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<Partial<Record<PartCategory, HTMLDivElement>>>({});
+
+  const grouped = useMemo(
+    () =>
+      PART_CATALOG.reduce(
+        (acc, part) => {
+          const cat = part.category as PartCategory;
+          (acc[cat] ??= []).push(part);
+          return acc;
+        },
+        {} as Partial<Record<PartCategory, PartDefinition[]>>,
+      ),
+    [],
+  );
+
+  const handleScroll = useCallback(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const scrollTop = container.scrollTop;
+    let current: PartCategory = SECTIONS[0].key;
+    for (const { key } of SECTIONS) {
+      const el = sectionRefs.current[key];
+      if (el && el.offsetTop <= scrollTop + STICKY_H + 2) {
+        current = key;
       }
-    };
-    input.click();
-  }, [onSelectPart]);
-
-  const toggleCategory = useCallback((key: string) => {
-    setCollapsed((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      try { localStorage.setItem("homeracker-collapsed", JSON.stringify([...next])); } catch { }
-      return next;
-    });
+    }
+    setActiveSection(current);
   }, []);
 
-  const query = searchQuery.toLowerCase().trim();
-  const isSearching = query.length > 0;
+  const scrollToSection = useCallback((key: PartCategory) => {
+    const el = sectionRefs.current[key];
+    const container = scrollRef.current;
+    if (!el || !container) return;
+    container.scrollTo({ top: el.offsetTop - STICKY_H, behavior: "smooth" });
+    setActiveSection(key);
+  }, []);
 
-  const filterParts = (parts: PartDefinition[]) =>
-    isSearching ? parts.filter((p) => p.name.toLowerCase().includes(query)) : parts;
+  const activeLabel = SECTIONS.find((s) => s.key === activeSection)?.label;
+
   return (
-    <div className="sidebar">
-      <div className="sidebar-header">
-        <h1>HomeRacker Configurator</h1>
-        <div className="sidebar-subtitle sidebar-links">
-          <a href="https://github.com/kellerlabs/homeracker-community/tree/main/configurator" target="_blank" rel="noopener noreferrer" title="Configurator GitHub">
-            Configurator <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" /></svg>
-          </a>
-
-          <a href="https://github.com/kellerlabs/homeracker" target="_blank" rel="noopener noreferrer" title="HomeRacker Core GitHub">
-            HomeRacker <svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" /></svg>
-          </a>
-        </div>
-      </div>
-
-      <div className="sidebar-search-container">
-        <input
-          className="sidebar-search"
-          type="text"
-          placeholder="Filter parts..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Escape") setSearchQuery(""); }}
-        />
-      </div>
-
-      {SECTIONS.map(({ key, label, filter }) => {
-        const parts = filterParts(PART_CATALOG.filter(filter));
-        if (parts.length === 0) return null;
-
-        const isCollapsed = !isSearching && collapsed.has(key);
-
-        return (
-          <div key={key} className="catalog-section">
-            <h2
-              className="catalog-section-title"
-              onClick={() => toggleCategory(key)}
-            >
-              <span className="catalog-section-toggle">{isCollapsed ? "\u25b8" : "\u25be"}</span>
-              {label}
-              <span className="catalog-section-count">{parts.length}</span>
-            </h2>
-            {!isCollapsed && (
-              <div className="catalog-grid">
-                {parts.map((part) => (
-                  <PartButton
-                    key={part.id}
-                    part={part}
-                    isActive={activePlaceId === part.id}
-                    onSelect={() => onSelectPart(part.id)}
-                  />
-                ))}
-              </div>
-            )}
+    <ResizableBox
+      width={300}
+      height={Infinity}
+      minConstraints={[300, 0]}
+      maxConstraints={[800, Infinity]}
+      axis="x"
+      resizeHandles={["e"]}
+      handle={(_axis, ref) => (
+        <ResizeHandle ref={ref as React.RefObject<HTMLDivElement>} />
+      )}
+      style={{ flexShrink: 0 }}
+      className="relative flex flex-col h-full bg-secondary border-r border-border"
+    >
+      <>
+        <Header />
+        <div className="flex flex-row flex-1 overflow-hidden">
+          <div className="flex flex-col gap-0.5 p-1 shrink-0 border-r border-border">
+            {SECTIONS.map(({ key, label }) => (
+              <SubMenu
+                key={key}
+                label={label}
+                isActive={activeSection === key}
+                onClick={() => scrollToSection(key)}
+              />
+            ))}
           </div>
-        );
-      })}
+          <div
+            ref={scrollRef}
+            className="relative flex-1 overflow-y-auto thin-scrollbar"
+            onScroll={handleScroll}
+          >
+            <div className="sticky top-0 z-10 flex h-8 items-center px-3 bg-secondary/90 backdrop-blur-sm border-b border-border">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-muted">
+                {activeLabel}
+              </span>
+            </div>
+            {SECTIONS.map(({ key, label }) => {
+              const parts = grouped[key];
+              if (!parts?.length) return null;
+              return (
+                <div key={key}>
+                  <div
+                    ref={(el) => {
+                      if (el) sectionRefs.current[key] = el;
+                    }}
+                    className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted/50 select-none"
+                  >
+                    {label}
+                  </div>
 
-      {/* Other — raw models, grouped by source file */}
-      {(() => {
-        const otherParts = filterParts(PART_CATALOG.filter((p) => p.category === "other"));
-        if (otherParts.length === 0) return null;
-
-        const isOtherCollapsed = !isSearching && collapsed.has("other");
-
-        // Group parts by their group field; ungrouped parts go into a flat list
-        const groups: Map<string, PartDefinition[]> = new Map();
-        const ungrouped: PartDefinition[] = [];
-        for (const part of otherParts) {
-          if (part.group) {
-            const list = groups.get(part.group) ?? [];
-            list.push(part);
-            groups.set(part.group, list);
-          } else {
-            ungrouped.push(part);
-          }
-        }
-
-        return (
-          <div className="catalog-section">
-            <h2
-              className="catalog-section-title"
-              onClick={() => toggleCategory("other")}
-            >
-              <span className="catalog-section-toggle">{isOtherCollapsed ? "\u25b8" : "\u25be"}</span>
-              Other
-              <span className="catalog-section-count">{otherParts.length}</span>
-            </h2>
-            {!isOtherCollapsed && (
-              <>
-                {ungrouped.length > 0 && (
-                  <div className="catalog-grid">
-                    {ungrouped.map((part) => (
+                  <div className="flex flex-wrap gap-2 px-2 pb-3">
+                    {parts.map((part) => (
                       <PartButton
                         key={part.id}
                         part={part}
-                        isActive={activePlaceId === part.id}
+                        isActive={activeMode === part.id}
                         onSelect={() => onSelectPart(part.id)}
                       />
                     ))}
                   </div>
-                )}
-                {[...groups.entries()].map(([groupName, parts]) => {
-                  const groupKey = `other-group-${groupName}`;
-                  const isGroupCollapsed = !isSearching && collapsed.has(groupKey);
-                  return (
-                    <div key={groupKey} className="catalog-subgroup">
-                      <h3
-                        className="catalog-subgroup-title"
-                        onClick={() => toggleCategory(groupKey)}
-                      >
-                        <span className="catalog-section-toggle">{isGroupCollapsed ? "\u25b8" : "\u25be"}</span>
-                        {groupName}
-                        <span className="catalog-section-count">{parts.length}</span>
-                      </h3>
-                      {!isGroupCollapsed && (
-                        <div className="catalog-grid">
-                          {parts.map((part) => (
-                            <PartButton
-                              key={part.id}
-                              part={part}
-                              isActive={activePlaceId === part.id}
-                              onSelect={() => onSelectPart(part.id)}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* Custom / Imported section */}
-      {(() => {
-        const customParts = filterParts(customSnapshot.definitions);
-        const isCustomCollapsed = !isSearching && collapsed.has("custom");
-        if (isSearching && customParts.length === 0) return null;
-
-        return (
-          <div className="catalog-section">
-            <h2
-              className="catalog-section-title"
-              onClick={() => toggleCategory("custom")}
-            >
-              <span className="catalog-section-toggle">{isCustomCollapsed ? "\u25b8" : "\u25be"}</span>
-              Custom
-              {customParts.length > 0 && (
-                <span className="catalog-section-count">{customParts.length}</span>
-              )}
-            </h2>
-            {!isCustomCollapsed && (
-              <>
-                {customParts.length > 0 && (
-                  <div className="catalog-grid" style={{ marginBottom: 8 }}>
-                    {customParts.map((part) => (
-                      <div key={part.id} className="catalog-item-wrapper">
-                        <PartButton
-                          part={part}
-                          isActive={activePlaceId === part.id}
-                          onSelect={() => onSelectPart(part.id)}
-                        />
-                        <button
-                          className="catalog-item-download"
-                          title={`Download ${part.name}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            downloadCustomPart(part.id);
-                          }}
-                        >
-                          &#8595;
-                        </button>
-                        <button
-                          className="catalog-item-replace"
-                          title={`Replace ${part.name} with a new file`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const input = document.createElement("input");
-                            input.type = "file";
-                            input.accept = ".stl,.3mf";
-                            input.onchange = async () => {
-                              const file = input.files?.[0];
-                              if (file) {
-                                try { await replaceCustomPart(part.id, file); }
-                                catch (err) { console.error("Replace failed:", err); }
-                              }
-                            };
-                            input.click();
-                          }}
-                        >
-                          &#8635;
-                        </button>
-                        <button
-                          className="catalog-item-delete"
-                          title={`Remove ${part.name}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteCustomPart(part.id);
-                          }}
-                        >
-                          &times;
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div style={{ display: "flex", gap: 4 }}>
-                  <button className="catalog-import-btn" onClick={handleImportModel}>
-                    Import Model
-                  </button>
-                  {customParts.some((p) => !usedDefinitionIds.has(p.id)) && (
-                    <button
-                      className="catalog-import-btn"
-                      title="Remove custom models not placed in the assembly"
-                      onClick={() => deleteUnusedCustomParts(usedDefinitionIds)}
-                    >
-                      Remove Unused
-                    </button>
-                  )}
                 </div>
-              </>
-            )}
+              );
+            })}
           </div>
-        );
-      })()}
+        </div>
+      </>
+    </ResizableBox>
+  );
+}
+
+const ResizeHandle = forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(function ResizeHandle(props, ref) {
+  return (
+    <div
+      ref={ref}
+      {...props}
+      className="absolute top-0 right-0 bottom-0 w-1.5 cursor-col-resize z-50 bg-transparent hover:bg-gray-500/50 transition-colors duration-150"
+    />
+  );
+});
+
+function PartButton({
+  part,
+  isActive,
+  onSelect,
+}: {
+  part: PartDefinition;
+  isActive: boolean;
+  onSelect: () => void;
+}) {
+  const color = PART_COLORS[part.category] ?? PART_COLORS.custom;
+  const thumbnail = useThumbnail(part);
+
+  return (
+    <button
+      onClick={onSelect}
+      title={part.description}
+      className={[
+        "min-w-0 overflow-hidden rounded-md border px-1.5 py-2",
+        "cursor-pointer text-center text-[11px] transition-colors duration-150",
+        isActive
+          ? "border-accent bg-accent text-black"
+          : "border-border bg-primary text-body hover:border-accent hover:bg-tertiary",
+      ].join(" ")}
+    >
+      <div
+        className="mb-1 flex h-20 w-full items-center justify-center rounded border"
+        style={{
+          backgroundColor: isActive
+            ? "rgba(0,0,0,0.25)"
+            : thumbnail
+              ? "#d0d0d0"
+              : color + "55",
+          borderColor: color,
+        }}
+      >
+        {thumbnail ? (
+          <img
+            src={thumbnail}
+            alt={part.name}
+            className="h-full w-full object-contain rounded"
+          />
+        ) : (
+          <span className="text-lg font-bold" style={{ color }}>
+            {getCategoryIcon(part.category)}
+          </span>
+        )}
+      </div>
+      <span className="block truncate">{part.name}</span>
+    </button>
+  );
+}
+
+function SubMenu({
+  label,
+  isActive,
+  onClick,
+}: {
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={[
+        "w-14 h-14 rounded-xl text-xs transition-colors duration-150",
+        isActive
+          ? "bg-accent text-black font-semibold"
+          : "bg-tertiary text-muted hover:bg-primary",
+      ].join(" ")}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Header() {
+  return (
+    <div className="p-4 border-b border-border shrink-0">
+      <h1 className="text-lg font-bold text-accent">HomeRacker Configurator</h1>
+      <div className="flex gap-2.5 mt-1.5">
+        <a
+          href="https://github.com/kellerlabs/homeracker-community/tree/main/configurator"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Configurator GitHub"
+          className="inline-flex items-center gap-1 text-xs text-muted no-underline opacity-70 transition-opacity duration-150 hover:opacity-100"
+        >
+          Configurator <Github />
+        </a>
+        <a
+          href="https://github.com/kellerlabs/homeracker"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="HomeRacker Core GitHub"
+          className="inline-flex items-center gap-1 text-xs text-muted no-underline opacity-70 transition-opacity duration-150 hover:opacity-100"
+        >
+          HomeRacker <Github />
+        </a>
+      </div>
     </div>
   );
+}
+
+function getCategoryIcon(category: PartCategory): string {
+  switch (category) {
+    case "support":
+      return "||";
+    case "connector":
+      return "+";
+    case "lockpin":
+      return "⊕";
+    case "other":
+      return "3D";
+    case "custom":
+      return "★";
+    default:
+      return "·";
+  }
 }
