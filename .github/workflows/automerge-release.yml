@@ -22,7 +22,11 @@ jobs:
 
       - name: Enable auto-merge for release PRs
         run: |
-          gh pr merge --auto --squash release-please--branches--main || true
+          prs=$(gh pr list --label "automerge" --label "autorelease: pending" --json number --jq '.[].number')
+          for pr in $prs; do
+            echo "Enabling auto-merge for PR #${pr}"
+            gh pr merge --auto --squash "$pr" || true
+          done
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GH_REPO: ${{ github.repository }}
