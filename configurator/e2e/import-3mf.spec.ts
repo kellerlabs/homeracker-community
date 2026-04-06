@@ -62,7 +62,10 @@ function createMinimal3MF(): Uint8Array {
   const files: { name: string; data: Uint8Array }[] = [
     { name: "_rels/.rels", data: new TextEncoder().encode(relsXml) },
     { name: "3D/3dmodel.model", data: new TextEncoder().encode(modelXml) },
-    { name: "[Content_Types].xml", data: new TextEncoder().encode(contentTypesXml) },
+    {
+      name: "[Content_Types].xml",
+      data: new TextEncoder().encode(contentTypesXml),
+    },
   ];
 
   return buildZipStore(files);
@@ -162,9 +165,18 @@ function createMultiModel3MF(): Uint8Array {
   return buildZipStore([
     { name: "_rels/.rels", data: new TextEncoder().encode(relsXml) },
     { name: "3D/3dmodel.model", data: new TextEncoder().encode(rootModelXml) },
-    { name: "3D/Objects/part_a.model", data: new TextEncoder().encode(partAXml) },
-    { name: "3D/Objects/part_b.model", data: new TextEncoder().encode(partBXml) },
-    { name: "[Content_Types].xml", data: new TextEncoder().encode(contentTypesXml) },
+    {
+      name: "3D/Objects/part_a.model",
+      data: new TextEncoder().encode(partAXml),
+    },
+    {
+      name: "3D/Objects/part_b.model",
+      data: new TextEncoder().encode(partBXml),
+    },
+    {
+      name: "[Content_Types].xml",
+      data: new TextEncoder().encode(contentTypesXml),
+    },
   ]);
 }
 
@@ -180,17 +192,17 @@ function buildZipStore(files: { name: string; data: Uint8Array }[]): Uint8Array 
     // Local file header (30 bytes + name + data)
     const local = new ArrayBuffer(30 + nameBytes.length + data.length);
     const lv = new DataView(local);
-    lv.setUint32(0, 0x04034b50, true);   // signature
-    lv.setUint16(4, 20, true);            // version needed
-    lv.setUint16(6, 0, true);             // flags
-    lv.setUint16(8, 0, true);             // compression: STORE
-    lv.setUint16(10, 0, true);            // mod time
-    lv.setUint16(12, 0, true);            // mod date
-    lv.setUint32(14, crc32(data), true);  // CRC-32
-    lv.setUint32(18, data.length, true);  // compressed size
-    lv.setUint32(22, data.length, true);  // uncompressed size
+    lv.setUint32(0, 0x04034b50, true); // signature
+    lv.setUint16(4, 20, true); // version needed
+    lv.setUint16(6, 0, true); // flags
+    lv.setUint16(8, 0, true); // compression: STORE
+    lv.setUint16(10, 0, true); // mod time
+    lv.setUint16(12, 0, true); // mod date
+    lv.setUint32(14, crc32(data), true); // CRC-32
+    lv.setUint32(18, data.length, true); // compressed size
+    lv.setUint32(22, data.length, true); // uncompressed size
     lv.setUint16(26, nameBytes.length, true); // name length
-    lv.setUint16(28, 0, true);            // extra length
+    lv.setUint16(28, 0, true); // extra length
     new Uint8Array(local).set(nameBytes, 30);
     new Uint8Array(local).set(data, 30 + nameBytes.length);
     localEntries.push(new Uint8Array(local));
@@ -198,23 +210,23 @@ function buildZipStore(files: { name: string; data: Uint8Array }[]): Uint8Array 
     // Central directory header (46 bytes + name)
     const central = new ArrayBuffer(46 + nameBytes.length);
     const cv = new DataView(central);
-    cv.setUint32(0, 0x02014b50, true);   // signature
-    cv.setUint16(4, 20, true);            // version made by
-    cv.setUint16(6, 20, true);            // version needed
-    cv.setUint16(8, 0, true);             // flags
-    cv.setUint16(10, 0, true);            // compression: STORE
-    cv.setUint16(12, 0, true);            // mod time
-    cv.setUint16(14, 0, true);            // mod date
-    cv.setUint32(16, crc32(data), true);  // CRC-32
-    cv.setUint32(20, data.length, true);  // compressed size
-    cv.setUint32(24, data.length, true);  // uncompressed size
+    cv.setUint32(0, 0x02014b50, true); // signature
+    cv.setUint16(4, 20, true); // version made by
+    cv.setUint16(6, 20, true); // version needed
+    cv.setUint16(8, 0, true); // flags
+    cv.setUint16(10, 0, true); // compression: STORE
+    cv.setUint16(12, 0, true); // mod time
+    cv.setUint16(14, 0, true); // mod date
+    cv.setUint32(16, crc32(data), true); // CRC-32
+    cv.setUint32(20, data.length, true); // compressed size
+    cv.setUint32(24, data.length, true); // uncompressed size
     cv.setUint16(28, nameBytes.length, true); // name length
-    cv.setUint16(30, 0, true);            // extra length
-    cv.setUint16(32, 0, true);            // comment length
-    cv.setUint16(34, 0, true);            // disk number start
-    cv.setUint16(36, 0, true);            // internal file attributes
-    cv.setUint32(38, 0, true);            // external file attributes
-    cv.setUint32(42, offset, true);       // relative offset of local header
+    cv.setUint16(30, 0, true); // extra length
+    cv.setUint16(32, 0, true); // comment length
+    cv.setUint16(34, 0, true); // disk number start
+    cv.setUint16(36, 0, true); // internal file attributes
+    cv.setUint32(38, 0, true); // external file attributes
+    cv.setUint32(42, offset, true); // relative offset of local header
     new Uint8Array(central).set(nameBytes, 46);
     centralEntries.push(new Uint8Array(central));
 
@@ -228,20 +240,26 @@ function buildZipStore(files: { name: string; data: Uint8Array }[]): Uint8Array 
   // End of central directory (22 bytes)
   const eocd = new ArrayBuffer(22);
   const ev = new DataView(eocd);
-  ev.setUint32(0, 0x06054b50, true);   // signature
-  ev.setUint16(4, 0, true);             // disk number
-  ev.setUint16(6, 0, true);             // disk with central dir
-  ev.setUint16(8, files.length, true);  // entries on this disk
+  ev.setUint32(0, 0x06054b50, true); // signature
+  ev.setUint16(4, 0, true); // disk number
+  ev.setUint16(6, 0, true); // disk with central dir
+  ev.setUint16(8, files.length, true); // entries on this disk
   ev.setUint16(10, files.length, true); // total entries
   ev.setUint32(12, centralDirSize, true);
   ev.setUint32(16, centralDirOffset, true);
-  ev.setUint16(20, 0, true);            // comment length
+  ev.setUint16(20, 0, true); // comment length
 
   const totalSize = offset + centralDirSize + 22;
   const result = new Uint8Array(totalSize);
   let pos = 0;
-  for (const l of localEntries) { result.set(l, pos); pos += l.length; }
-  for (const c of centralEntries) { result.set(c, pos); pos += c.length; }
+  for (const l of localEntries) {
+    result.set(l, pos);
+    pos += l.length;
+  }
+  for (const c of centralEntries) {
+    result.set(c, pos);
+    pos += c.length;
+  }
   result.set(new Uint8Array(eocd), pos);
 
   return result;
@@ -249,14 +267,14 @@ function buildZipStore(files: { name: string; data: Uint8Array }[]): Uint8Array 
 
 /** Simple CRC-32 for ZIP entries. */
 function crc32(data: Uint8Array): number {
-  let crc = 0xFFFFFFFF;
+  let crc = 0xffffffff;
   for (let i = 0; i < data.length; i++) {
     crc ^= data[i];
     for (let j = 0; j < 8; j++) {
-      crc = (crc >>> 1) ^ (crc & 1 ? 0xEDB88320 : 0);
+      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
     }
   }
-  return (crc ^ 0xFFFFFFFF) >>> 0;
+  return (crc ^ 0xffffffff) >>> 0;
 }
 
 test.describe("3MF import", () => {
@@ -278,10 +296,7 @@ test.describe("3MF import", () => {
     expect(result[0]).toContain("custom-3mf-");
 
     // Place the imported 3MF part
-    const placed = await page.evaluate(
-      (id: string) => (window as any).__assembly.addPart(id, [0, 0, 0]),
-      result[0],
-    );
+    const placed = await page.evaluate((id: string) => (window as any).__assembly.addPart(id, [0, 0, 0]), result[0]);
     expect(placed).not.toBeNull();
 
     // Verify it appears in the BOM
@@ -295,9 +310,7 @@ test.describe("3MF import", () => {
     expect(bom.some((r) => r.name.includes("test-cube"))).toBe(true);
   });
 
-  test("import a multi-model 3MF (production extension) as separate parts", async ({
-    appPage: page,
-  }) => {
+  test("import a multi-model 3MF (production extension) as separate parts", async ({ appPage: page }) => {
     // Simulates BambuStudio-style 3MF with meshes in separate .model files
     // referenced via p:path (3MF production extension).
     const zipBytes = createMultiModel3MF();
@@ -315,17 +328,12 @@ test.describe("3MF import", () => {
 
     // Both parts should be placeable
     for (const { id } of result) {
-      const placed = await page.evaluate(
-        (partId: string) => (window as any).__assembly.addPart(partId, [0, 0, 0]),
-        id,
-      );
+      const placed = await page.evaluate((partId: string) => (window as any).__assembly.addPart(partId, [0, 0, 0]), id);
       expect(placed).not.toBeNull();
     }
   });
 
-  test("real BambuStudio 3MF imports correct number of parts", async ({
-    appPage: page,
-  }, testInfo) => {
+  test("real BambuStudio 3MF imports correct number of parts", async ({ appPage: page }, testInfo) => {
     testInfo.setTimeout(120_000);
     const filePath = path.resolve(__dirname, "../raw-models/HomeRacker+-+Pi5+Case.3mf");
     if (!fs.existsSync(filePath)) {

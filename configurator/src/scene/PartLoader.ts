@@ -27,7 +27,7 @@ export async function loadModel(path: string): Promise<THREE.Group> {
         (err) => {
           loading.delete(path);
           reject(err);
-        }
+        },
       );
     });
     loading.set(path, promise);

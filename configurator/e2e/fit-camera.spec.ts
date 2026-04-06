@@ -1,9 +1,7 @@
 import { test, expect } from "./fixtures";
 
 test.describe("FitCamera on load", () => {
-  test("camera target moves to assembly center on reload with parts", async ({
-    appPage: page,
-  }) => {
+  test("camera target moves to assembly center on reload with parts", async ({ appPage: page }) => {
     // Place parts far from origin so the assembly center is clearly non-zero
     await page.evaluate(() => {
       const a = (window as any).__assembly;
@@ -16,10 +14,9 @@ test.describe("FitCamera on load", () => {
     // Reload — parts persist via localStorage, FitCamera runs on mount
     await page.reload();
     await page.waitForSelector(".app", { timeout: 10_000 });
-    await page.waitForFunction(
-      () => !!(window as any).__controls?.target && !!(window as any).__camera,
-      { timeout: 10_000 },
-    );
+    await page.waitForFunction(() => !!(window as any).__controls?.target && !!(window as any).__camera, {
+      timeout: 10_000,
+    });
 
     const result = await page.evaluate(() => {
       const controls = (window as any).__controls;
@@ -48,9 +45,7 @@ test.describe("FitCamera on load", () => {
     expect(result!.camY).toBeGreaterThan(0);
   });
 
-  test("camera target stays at origin when no parts are placed", async ({
-    appPage: page,
-  }) => {
+  test("camera target stays at origin when no parts are placed", async ({ appPage: page }) => {
     // Clear any existing parts and reload
     await page.evaluate(() => {
       (window as any).__assembly.clear();
@@ -58,10 +53,9 @@ test.describe("FitCamera on load", () => {
 
     await page.reload();
     await page.waitForSelector(".app", { timeout: 10_000 });
-    await page.waitForFunction(
-      () => !!(window as any).__controls?.target,
-      { timeout: 10_000 },
-    );
+    await page.waitForFunction(() => !!(window as any).__controls?.target, {
+      timeout: 10_000,
+    });
 
     const result = await page.evaluate(() => {
       const controls = (window as any).__controls;

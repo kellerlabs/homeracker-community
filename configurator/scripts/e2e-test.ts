@@ -46,7 +46,10 @@ const server = Bun.serve({
     if (pathname.startsWith("/src/") && /\.(tsx?|jsx?)$/.test(pathname)) {
       const mapped = pathname.replace("/src/", "").replace(".tsx", ".js").replace(".ts", ".js");
       const file = Bun.file(join(DIST_DIR, mapped));
-      if (await file.exists()) return new Response(file, { headers: { "Content-Type": "application/javascript" } });
+      if (await file.exists())
+        return new Response(file, {
+          headers: { "Content-Type": "application/javascript" },
+        });
     }
 
     if (pathname !== "/" && pathname !== "/index.html") {
@@ -57,10 +60,9 @@ const server = Bun.serve({
     }
 
     const html = await Bun.file(join(PROJECT_ROOT, "index.html")).text();
-    return new Response(
-      html.replace('src="/src/main.tsx"', 'src="/src/main.js"'),
-      { headers: { "Content-Type": "text/html" } }
-    );
+    return new Response(html.replace('src="/src/main.tsx"', 'src="/src/main.js"'), {
+      headers: { "Content-Type": "text/html" },
+    });
   },
 });
 
@@ -132,17 +134,35 @@ const catalogItems = await page.evaluate(() => {
 
 // 18 supports + 9 connectors + 7 foot connectors + 2 lock pins = 36
 assert("Catalog has 36 items", catalogItems.length === 36, `got ${catalogItems.length}`);
-assert("No item is active initially", catalogItems.every((i) => !i.active));
+assert(
+  "No item is active initially",
+  catalogItems.every((i) => !i.active),
+);
 
 const expectedParts = [
-  "Support (1u)", "Support (5u)", "Support (10u)", "Support (18u)",
-  "1D 1-Way", "1D 2-Way", "2D 2-Way", "2D 3-Way", "2D 4-Way",
-  "3D 3-Way", "3D 4-Way", "3D 5-Way", "3D 6-Way",
-  "2D 2-Way Foot", "3D 4-Way Foot",
-  "Lock Pin", "Lock Pin (No Grip)",
+  "Support (1u)",
+  "Support (5u)",
+  "Support (10u)",
+  "Support (18u)",
+  "1D 1-Way",
+  "1D 2-Way",
+  "2D 2-Way",
+  "2D 3-Way",
+  "2D 4-Way",
+  "3D 3-Way",
+  "3D 4-Way",
+  "3D 5-Way",
+  "3D 6-Way",
+  "2D 2-Way Foot",
+  "3D 4-Way Foot",
+  "Lock Pin",
+  "Lock Pin (No Grip)",
 ];
 for (const name of expectedParts) {
-  assert(`Catalog contains "${name}"`, catalogItems.some((i) => i.name === name));
+  assert(
+    `Catalog contains "${name}"`,
+    catalogItems.some((i) => i.name === name),
+  );
 }
 
 // ──────────────────────────────────────────────
@@ -151,7 +171,7 @@ for (const name of expectedParts) {
 console.log("\n--- Test: Placement mode ---");
 
 // Click the "3D 6-Way" connector (4th catalog item)
-const connector6WayBtn = await page.$('.catalog-item:nth-child(4)');
+const connector6WayBtn = await page.$(".catalog-item:nth-child(4)");
 if (connector6WayBtn) {
   // First, find the correct button by text
   await page.evaluate(() => {
@@ -176,9 +196,17 @@ if (connector6WayBtn) {
     };
   });
 
-  assert("3D 6-Way becomes active after click", afterClick.activeName === "3D 6-Way", `active: ${afterClick.activeName}`);
+  assert(
+    "3D 6-Way becomes active after click",
+    afterClick.activeName === "3D 6-Way",
+    `active: ${afterClick.activeName}`,
+  );
   assert("Viewport hint appears in placement mode", afterClick.hintVisible);
-  assert("Hint says click to place", afterClick.hintText?.includes("Click to place") ?? false, afterClick.hintText ?? "no hint");
+  assert(
+    "Hint says click to place",
+    afterClick.hintText?.includes("Click to place") ?? false,
+    afterClick.hintText ?? "no hint",
+  );
 }
 
 // Press Escape to exit placement mode
@@ -311,7 +339,11 @@ const bom2 = await page.evaluate(() => {
   }));
 });
 
-assert("BOM quantity updates to 2", bom2.some((r) => r.qty === "2"), `rows: ${JSON.stringify(bom2)}`);
+assert(
+  "BOM quantity updates to 2",
+  bom2.some((r) => r.qty === "2"),
+  `rows: ${JSON.stringify(bom2)}`,
+);
 
 // Place a support between them
 const placed3 = await page.evaluate(() => {
@@ -329,7 +361,11 @@ const bom3 = await page.evaluate(() => {
 });
 
 assert("BOM shows at least 2 rows (connector + support)", bom3.length >= 2, `got ${bom3.length}`);
-assert("BOM includes support", bom3.some((r) => r.name.includes("Support")), `rows: ${JSON.stringify(bom3)}`);
+assert(
+  "BOM includes support",
+  bom3.some((r) => r.name.includes("Support")),
+  `rows: ${JSON.stringify(bom3)}`,
+);
 
 // ──────────────────────────────────────────────
 // Test 5: Collision detection
@@ -472,7 +508,10 @@ const getBBox = async (objectName: string) => {
       // Walk up parent chain, force updateMatrix on each
       const chain: any[] = [];
       let p = obj;
-      while (p) { chain.unshift(p); p = p.parent; }
+      while (p) {
+        chain.unshift(p);
+        p = p.parent;
+      }
       for (const node of chain) {
         node.updateMatrix();
       }
@@ -487,7 +526,10 @@ const getBBox = async (objectName: string) => {
     };
 
     // Compute world bounding box by traversing meshes
-    const box = { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
+    const box = {
+      min: [Infinity, Infinity, Infinity],
+      max: [-Infinity, -Infinity, -Infinity],
+    };
     target.traverse((child: any) => {
       if (child.isMesh && child.geometry) {
         forceUpdateMatrices(child);
@@ -508,9 +550,9 @@ const getBBox = async (objectName: string) => {
           const v = { x: c[0], y: c[1], z: c[2] };
           // Apply world matrix manually
           const e = child.matrixWorld.elements;
-          const wx = e[0]*v.x + e[4]*v.y + e[8]*v.z + e[12];
-          const wy = e[1]*v.x + e[5]*v.y + e[9]*v.z + e[13];
-          const wz = e[2]*v.x + e[6]*v.y + e[10]*v.z + e[14];
+          const wx = e[0] * v.x + e[4] * v.y + e[8] * v.z + e[12];
+          const wy = e[1] * v.x + e[5] * v.y + e[9] * v.z + e[13];
+          const wz = e[2] * v.x + e[6] * v.y + e[10] * v.z + e[14];
           box.min[0] = Math.min(box.min[0], wx);
           box.min[1] = Math.min(box.min[1], wy);
           box.min[2] = Math.min(box.min[2], wz);
@@ -553,7 +595,7 @@ if (ghostBBox) {
   assert(
     "Ghost preview is taller in Y than X (vertical orientation)",
     ghostBBox.sizeY > ghostBBox.sizeX * 2,
-    `Y=${ghostBBox.sizeY} X=${ghostBBox.sizeX}`
+    `Y=${ghostBBox.sizeY} X=${ghostBBox.sizeX}`,
   );
 }
 
@@ -578,25 +620,33 @@ if (placedBBox) {
   assert(
     "Placed part is taller in Y than X (vertical, matching ghost)",
     placedBBox.sizeY > placedBBox.sizeX * 2,
-    `Y=${placedBBox.sizeY} X=${placedBBox.sizeX}`
+    `Y=${placedBBox.sizeY} X=${placedBBox.sizeX}`,
   );
   assert(
     "Placed part is taller in Y than Z (vertical, matching ghost)",
     placedBBox.sizeY > placedBBox.sizeZ * 2,
-    `Y=${placedBBox.sizeY} Z=${placedBBox.sizeZ}`
+    `Y=${placedBBox.sizeY} Z=${placedBBox.sizeZ}`,
   );
 }
 
 // Step 4: If both exist, compare that the tallest axis is the same
 if (ghostBBox && placedBBox) {
-  const ghostTallAxis = ghostBBox.sizeY > ghostBBox.sizeX && ghostBBox.sizeY > ghostBBox.sizeZ ? "Y"
-    : ghostBBox.sizeX > ghostBBox.sizeZ ? "X" : "Z";
-  const placedTallAxis = placedBBox.sizeY > placedBBox.sizeX && placedBBox.sizeY > placedBBox.sizeZ ? "Y"
-    : placedBBox.sizeX > placedBBox.sizeZ ? "X" : "Z";
+  const ghostTallAxis =
+    ghostBBox.sizeY > ghostBBox.sizeX && ghostBBox.sizeY > ghostBBox.sizeZ
+      ? "Y"
+      : ghostBBox.sizeX > ghostBBox.sizeZ
+        ? "X"
+        : "Z";
+  const placedTallAxis =
+    placedBBox.sizeY > placedBBox.sizeX && placedBBox.sizeY > placedBBox.sizeZ
+      ? "Y"
+      : placedBBox.sizeX > placedBBox.sizeZ
+        ? "X"
+        : "Z";
   assert(
     `Ghost and placed part share tallest axis`,
     ghostTallAxis === placedTallAxis,
-    `ghost=${ghostTallAxis} placed=${placedTallAxis}`
+    `ghost=${ghostTallAxis} placed=${placedTallAxis}`,
   );
 }
 
@@ -685,7 +735,10 @@ const canPlaceResults = await page.evaluate(() => {
 
 assert("canPlace Y-orientation at [0,0,0] succeeds", canPlaceResults.canPlaceY);
 assert("canPlace X-orientation at [0,0,0] succeeds", canPlaceResults.canPlaceX);
-assert("canPlace X-orientation at [1,0,0] fails (blocked by connector at [3,0,0])", !canPlaceResults.cannotPlaceXBlocked);
+assert(
+  "canPlace X-orientation at [1,0,0] fails (blocked by connector at [3,0,0])",
+  !canPlaceResults.cannotPlaceXBlocked,
+);
 
 // Clean up
 await page.evaluate(() => (window as any).__assembly.clear());
@@ -716,13 +769,9 @@ const snapResults = await page.evaluate(() => {
     orientations: [...new Set(orientations)],
     directions: [...new Set(directions)],
     // Check a specific snap: +z socket should produce Z-oriented support at [5,0,6]
-    hasZSnap: points.some(
-      (p: any) => p.orientation === "z" && p.socketDirection === "+z"
-    ),
+    hasZSnap: points.some((p: any) => p.orientation === "z" && p.socketDirection === "+z"),
     // +x socket should produce X-oriented support
-    hasXSnap: points.some(
-      (p: any) => p.orientation === "x" && p.socketDirection === "+x"
-    ),
+    hasXSnap: points.some((p: any) => p.orientation === "x" && p.socketDirection === "+x"),
   };
 });
 
@@ -732,7 +781,7 @@ assert("Snap includes X-oriented candidate (+x socket)", snapResults.hasXSnap);
 assert(
   "Snap has multiple orientations",
   snapResults.orientations.length >= 2,
-  `orientations: ${JSON.stringify(snapResults.orientations)}`
+  `orientations: ${JSON.stringify(snapResults.orientations)}`,
 );
 
 // Test findBestSnap returns the nearest one
@@ -743,7 +792,11 @@ const bestSnapResult = await page.evaluate(() => {
   // Cursor near the +x socket of the connector at [5,0,5]
   const best = snap.findBestSnap(a, "support-3u", [6, 0, 5], 3);
   return best
-    ? { position: best.position, orientation: best.orientation, direction: best.socketDirection }
+    ? {
+        position: best.position,
+        orientation: best.orientation,
+        direction: best.socketDirection,
+      }
     : null;
 });
 
@@ -752,7 +805,7 @@ if (bestSnapResult) {
   assert(
     "Best snap is X-oriented (nearest to cursor at [6,0,5])",
     bestSnapResult.orientation === "x",
-    `got orientation: ${bestSnapResult.orientation}`
+    `got orientation: ${bestSnapResult.orientation}`,
   );
 }
 
@@ -814,7 +867,7 @@ const bomOriented = await page.evaluate(() => {
 assert(
   "BOM includes lock pins for x-oriented support adjacent to connector",
   bomOriented.some((r) => r.name.includes("Lock Pin")),
-  `BOM rows: ${JSON.stringify(bomOriented)}`
+  `BOM rows: ${JSON.stringify(bomOriented)}`,
 );
 
 // Clean up
@@ -844,7 +897,7 @@ const supportHint = await page.evaluate(() => {
 assert(
   "Support placement hint mentions orientation cycling",
   supportHint.includes("orientation"),
-  `hint: ${supportHint}`
+  `hint: ${supportHint}`,
 );
 
 // Now switch to a connector and check the hint changes
@@ -865,7 +918,7 @@ const connectorHint = await page.evaluate(() => {
 assert(
   "Connector placement hint mentions rotate (not orientation)",
   connectorHint.includes("rotate") && !connectorHint.includes("orientation"),
-  `hint: ${connectorHint}`
+  `hint: ${connectorHint}`,
 );
 
 // Exit placement mode
@@ -1067,12 +1120,12 @@ assert("2D2W has +x snap (horizontal)", lShapeSnap.hasXSnap);
 assert(
   "+z snap position is in front of connector",
   lShapeSnap.zPos && lShapeSnap.zPos[2] === 6,
-  `pos: ${JSON.stringify(lShapeSnap.zPos)}`
+  `pos: ${JSON.stringify(lShapeSnap.zPos)}`,
 );
 assert(
   "+x snap position is right of connector",
   lShapeSnap.xPos && lShapeSnap.xPos[0] === 6,
-  `pos: ${JSON.stringify(lShapeSnap.xPos)}`
+  `pos: ${JSON.stringify(lShapeSnap.xPos)}`,
 );
 assert("+z snap has Z orientation", lShapeSnap.zOrient === "z");
 assert("+x snap has X orientation", lShapeSnap.xOrient === "x");
@@ -1089,10 +1142,22 @@ const lShapePlaceX = await page.evaluate(() => {
 
   // Place the support at the snap position with the snap orientation
   const id = a.addPart("support-5u", xSnap.position, [0, 0, 0], xSnap.orientation);
-  if (!id) return { placed: false, reason: "addPart returned null", pos: xSnap.position, orient: xSnap.orientation };
+  if (!id)
+    return {
+      placed: false,
+      reason: "addPart returned null",
+      pos: xSnap.position,
+      orient: xSnap.orientation,
+    };
 
   // Verify the support occupies the correct cells (extending in +x from [6,0,5])
-  const expectedCells: [number, number, number][] = [[6,0,5],[7,0,5],[8,0,5],[9,0,5],[10,0,5]];
+  const expectedCells: [number, number, number][] = [
+    [6, 0, 5],
+    [7, 0, 5],
+    [8, 0, 5],
+    [9, 0, 5],
+    [10, 0, 5],
+  ];
   const occupancy = expectedCells.map((c) => ({
     cell: c,
     occupied: a.isOccupied(c),
@@ -1106,8 +1171,11 @@ const lShapePlaceX = await page.evaluate(() => {
 });
 
 assert("Support placed at +x snap position", lShapePlaceX.placed === true, JSON.stringify(lShapePlaceX));
-assert("X-oriented support occupies cells [6..10, 0, 5]", lShapePlaceX.allOccupied === true,
-  JSON.stringify(lShapePlaceX.occupancy));
+assert(
+  "X-oriented support occupies cells [6..10, 0, 5]",
+  lShapePlaceX.allOccupied === true,
+  JSON.stringify(lShapePlaceX.occupancy),
+);
 assert("Connector cell [5,0,5] still occupied", lShapePlaceX.connectorCellStillConnector === true);
 
 // Now place a support in the +z slot and verify the snap only offers nothing (both filled)
@@ -1126,7 +1194,11 @@ const lShapeOpen = await page.evaluate(() => {
   return { totalCandidates: points.length, hasZSnap, hasXSnap };
 });
 
-assert("After filling both slots, 0 snap candidates remain", lShapeOpen.totalCandidates === 0, `got ${lShapeOpen.totalCandidates}`);
+assert(
+  "After filling both slots, 0 snap candidates remain",
+  lShapeOpen.totalCandidates === 0,
+  `got ${lShapeOpen.totalCandidates}`,
+);
 assert("Filled +z slot is no longer offered", !lShapeOpen.hasZSnap);
 assert("Filled +x slot is no longer offered", !lShapeOpen.hasXSnap);
 
@@ -1162,11 +1234,15 @@ const connectorSnapTop = await page.evaluate(() => {
   };
 });
 
-assert("Connector snap finds support top", connectorSnapTop.hasTopSnap,
-  `count=${connectorSnapTop.count}`);
-assert("Connector snap top is at [5,5,5]",
-  connectorSnapTop.topPos && connectorSnapTop.topPos[0] === 5 && connectorSnapTop.topPos[1] === 5 && connectorSnapTop.topPos[2] === 5,
-  `pos: ${JSON.stringify(connectorSnapTop.topPos)}`);
+assert("Connector snap finds support top", connectorSnapTop.hasTopSnap, `count=${connectorSnapTop.count}`);
+assert(
+  "Connector snap top is at [5,5,5]",
+  connectorSnapTop.topPos &&
+    connectorSnapTop.topPos[0] === 5 &&
+    connectorSnapTop.topPos[1] === 5 &&
+    connectorSnapTop.topPos[2] === 5,
+  `pos: ${JSON.stringify(connectorSnapTop.topPos)}`,
+);
 assert("Bottom snap excluded (below ground)", !connectorSnapTop.hasBottomSnap);
 
 // Also test with support-10u (top at y=9, connector at y=10)
@@ -1185,12 +1261,16 @@ const connectorSnapTall = await page.evaluate(() => {
   };
 });
 
-assert("Connector snap finds top of tall (10u) support",
+assert(
+  "Connector snap finds top of tall (10u) support",
   connectorSnapTall.hasTopSnap,
-  `pos: ${JSON.stringify(connectorSnapTall.topPos)}`);
-assert("Connector at top of 10u support is at [5,10,5]",
+  `pos: ${JSON.stringify(connectorSnapTall.topPos)}`,
+);
+assert(
+  "Connector at top of 10u support is at [5,10,5]",
   connectorSnapTall.topPos && connectorSnapTall.topPos[1] === 10,
-  `pos: ${JSON.stringify(connectorSnapTall.topPos)}`);
+  `pos: ${JSON.stringify(connectorSnapTall.topPos)}`,
+);
 
 // Clean up
 await page.evaluate(() => (window as any).__assembly.clear());
@@ -1233,11 +1313,12 @@ const raySnap = await page.evaluate(() => {
 });
 
 assert("No top snap without ray (cursor XZ too far)", !raySnap.hasTopWithoutRay);
-assert("Top snap found with ray proximity", raySnap.hasTopWithRay,
-  `pos: ${JSON.stringify(raySnap.topPos)}`);
-assert("Ray snap position is [5,10,5]",
+assert("Top snap found with ray proximity", raySnap.hasTopWithRay, `pos: ${JSON.stringify(raySnap.topPos)}`);
+assert(
+  "Ray snap position is [5,10,5]",
   raySnap.topPos && raySnap.topPos[0] === 5 && raySnap.topPos[1] === 10 && raySnap.topPos[2] === 5,
-  `pos: ${JSON.stringify(raySnap.topPos)}`);
+  `pos: ${JSON.stringify(raySnap.topPos)}`,
+);
 
 // Clean up
 await page.evaluate(() => (window as any).__assembly.clear());

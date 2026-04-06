@@ -32,11 +32,7 @@ function fitCameraToObject(object: THREE.Object3D) {
   const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
   const dist = maxDim * 1.8;
-  camera!.position.set(
-    center.x + dist * 0.7,
-    center.y + dist * 0.5,
-    center.z + dist * 0.7
-  );
+  camera!.position.set(center.x + dist * 0.7, center.y + dist * 0.5, center.z + dist * 0.7);
   camera!.lookAt(center);
   camera!.updateProjectionMatrix();
 }
@@ -74,11 +70,7 @@ export async function generateThumbnail(modelPath: string): Promise<string> {
 }
 
 /** Generate a thumbnail from a BufferGeometry (for custom STL parts). */
-export function generateThumbnailFromGeometry(
-  defId: string,
-  geometry: THREE.BufferGeometry,
-  color: string
-): string {
+export function generateThumbnailFromGeometry(defId: string, geometry: THREE.BufferGeometry, color: string): string {
   if (cache.has(defId)) return cache.get(defId)!;
   ensureRenderer();
   const material = new THREE.MeshStandardMaterial({ color });

@@ -19,10 +19,13 @@ function gridKeysForCell(pos: GridPosition): string[] {
   if (pos[1] % 1 !== 0) yVals.push(Math.floor(pos[1]) + 1);
   if (pos[2] % 1 !== 0) zVals.push(Math.floor(pos[2]) + 1);
   const keys: string[] = [];
-  for (const x of xVals)
-    for (const y of yVals)
-      for (const z of zVals)
+  for (const x of xVals) {
+    for (const y of yVals) {
+      for (const z of zVals) {
         keys.push(`${x},${y},${z}`);
+      }
+    }
+  }
   return keys;
 }
 
@@ -45,7 +48,12 @@ export class AssemblyState {
   /** Maps "x,y,z" grid key → instance IDs at that cell */
   gridOccupancy: Map<string, string[]> = new Map();
   private listeners: Set<() => void> = new Set();
-  private cachedSnapshot: AssemblySnapshot = { parts: [], snapEnabled: true, showCollisions: false, fineMeshCollisions: false };
+  private cachedSnapshot: AssemblySnapshot = {
+    parts: [],
+    snapEnabled: true,
+    showCollisions: false,
+    fineMeshCollisions: false,
+  };
 
   /** When true, parts snap to nearby connection points during placement/drag */
   snapEnabled: boolean = true;
@@ -63,13 +71,24 @@ export class AssemblyState {
         if (settings.showCollisions !== undefined) this.showCollisions = !!settings.showCollisions;
         if (settings.fineMeshCollisions !== undefined) this.fineMeshCollisions = !!settings.fineMeshCollisions;
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   private persistSettings() {
     try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify({ snapEnabled: this.snapEnabled, showCollisions: this.showCollisions, fineMeshCollisions: this.fineMeshCollisions }));
-    } catch { /* ignore */ }
+      localStorage.setItem(
+        SETTINGS_KEY,
+        JSON.stringify({
+          snapEnabled: this.snapEnabled,
+          showCollisions: this.showCollisions,
+          fineMeshCollisions: this.fineMeshCollisions,
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
   }
 
   setSnapEnabled(value: boolean) {

@@ -19,9 +19,7 @@ test.describe("Autorotate fixture: connector snap Y-height", () => {
     // Load fixture, filtering out custom parts that won't exist in test env
     const filteredFixture = {
       ...fixtureData,
-      parts: fixtureData.parts.filter(
-        (p: { type: string }) => !p.type.startsWith("custom-")
-      ),
+      parts: fixtureData.parts.filter((p: { type: string }) => !p.type.startsWith("custom-")),
     };
     await page.evaluate((data) => {
       const a = (window as any).__assembly;
@@ -29,9 +27,7 @@ test.describe("Autorotate fixture: connector snap Y-height", () => {
     }, filteredFixture);
   });
 
-  test("connector snaps to correct Y at junction [0,15,-3]", async ({
-    appPage: page,
-  }) => {
+  test("connector snaps to correct Y at junction [0,15,-3]", async ({ appPage: page }) => {
     // The junction at [0, 15, -3] has 4 support endpoints converging:
     // - support-13u at [0,2,-3] y-oriented: top endpoint [0,14,-3], outward +y
     // - support-18u at [0,15,-2] z-oriented: first endpoint [0,15,-2], outward -z
@@ -61,9 +57,7 @@ test.describe("Autorotate fixture: connector snap Y-height", () => {
     expect(result.position).toEqual([0, 15, -3]);
   });
 
-  test("auto-rotation covers all 4 needed directions at junction", async ({
-    appPage: page,
-  }) => {
+  test("auto-rotation covers all 4 needed directions at junction", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       const snap = (window as any).__snap;
@@ -95,9 +89,7 @@ test.describe("Autorotate fixture: connector snap Y-height", () => {
       if (!gridUtils) return null;
 
       const baseArms = ["+z", "-z", "+x", "+y"];
-      return baseArms.map((arm: string) =>
-        gridUtils.rotateDirection(arm, rotation)
-      );
+      return baseArms.map((arm: string) => gridUtils.rotateDirection(arm, rotation));
     }, result.autoRotation);
 
     if (armsCovered) {
@@ -108,9 +100,7 @@ test.describe("Autorotate fixture: connector snap Y-height", () => {
     }
   });
 
-  test("snap position is not affected by ground lift", async ({
-    appPage: page,
-  }) => {
+  test("snap position is not affected by ground lift", async ({ appPage: page }) => {
     // This test ensures the snap Y doesn't get inflated by computeGroundLift
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
@@ -140,9 +130,7 @@ test.describe("Autorotate fixture: connector snap Y-height", () => {
     }
   });
 
-  test("diagnostic: all snap candidates with positions and distances", async ({
-    appPage: page,
-  }) => {
+  test("diagnostic: all snap candidates with positions and distances", async ({ appPage: page }) => {
     // Diagnostic test: dump all snap candidates to understand what positions
     // are available and which one might win with different cursor/ray combos
     const result = await page.evaluate(() => {
@@ -151,9 +139,7 @@ test.describe("Autorotate fixture: connector snap Y-height", () => {
 
       // Use larger radius to see ALL possible snap positions
       const cursorGrid = [0, 0, -3] as [number, number, number];
-      const candidates = snap.findConnectorSnapPoints(
-        a, "connector-3d4w", cursorGrid, 50
-      );
+      const candidates = snap.findConnectorSnapPoints(a, "connector-3d4w", cursorGrid, 50);
 
       // Collect unique positions with their distances
       const posMap = new Map<string, { pos: number[]; distance: number; count: number; socketDirs: string[] }>();
@@ -190,9 +176,7 @@ test.describe("Autorotate fixture: connector snap Y-height", () => {
     expect(result.uniquePositions[0].pos).toEqual([0, 15, -3]);
   });
 
-  test("snap with ray from above selects correct Y position", async ({
-    appPage: page,
-  }) => {
+  test("snap with ray from above selects correct Y position", async ({ appPage: page }) => {
     // Simulate a camera ray looking downward at the junction
     // Camera is above and slightly behind, looking down at the junction
     const result = await page.evaluate(() => {
@@ -202,8 +186,8 @@ test.describe("Autorotate fixture: connector snap Y-height", () => {
       const cursorGrid = [0, 0, -3] as [number, number, number];
       // Simulate a ray from above pointing down (camera above the scene)
       const ray = {
-        origin: [0, 40, -3] as [number, number, number],  // above the scene
-        direction: [0, -1, 0] as [number, number, number],  // looking straight down
+        origin: [0, 40, -3] as [number, number, number], // above the scene
+        direction: [0, -1, 0] as [number, number, number], // looking straight down
       };
 
       const best = snap.findBestConnectorSnap(a, "connector-3d4w", cursorGrid, 3, ray);

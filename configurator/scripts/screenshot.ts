@@ -31,7 +31,10 @@ const server = Bun.serve({
     if (pathname.startsWith("/src/") && /\.(tsx?|jsx?)$/.test(pathname)) {
       const mapped = pathname.replace("/src/", "").replace(".tsx", ".js").replace(".ts", ".js");
       const file = Bun.file(join(DIST_DIR, mapped));
-      if (await file.exists()) return new Response(file, { headers: { "Content-Type": "application/javascript" } });
+      if (await file.exists())
+        return new Response(file, {
+          headers: { "Content-Type": "application/javascript" },
+        });
     }
 
     if (pathname !== "/" && pathname !== "/index.html") {
@@ -47,10 +50,9 @@ const server = Bun.serve({
     }
 
     const html = await Bun.file(join(PROJECT_ROOT, "index.html")).text();
-    return new Response(
-      html.replace('src="/src/main.tsx"', 'src="/src/main.js"'),
-      { headers: { "Content-Type": "text/html" } }
-    );
+    return new Response(html.replace('src="/src/main.tsx"', 'src="/src/main.js"'), {
+      headers: { "Content-Type": "text/html" },
+    });
   },
 });
 
@@ -81,10 +83,10 @@ await page.evaluate(() => {
   asm.clear();
 
   // Bottom layer: 4 foot connectors at corners (rotate arms toward adjacent supports)
-  asm.addPart("connector-3d3w-foot", [0, 0, 0], [0, 0, 0]);     // arms: +x, +y, +z
-  asm.addPart("connector-3d3w-foot", [5, 0, 0], [0, 270, 0]);   // arms: -x, +y, +z
-  asm.addPart("connector-3d3w-foot", [0, 0, 5], [0, 90, 0]);    // arms: +x, +y, -z
-  asm.addPart("connector-3d3w-foot", [5, 0, 5], [0, 180, 0]);   // arms: -x, +y, -z
+  asm.addPart("connector-3d3w-foot", [0, 0, 0], [0, 0, 0]); // arms: +x, +y, +z
+  asm.addPart("connector-3d3w-foot", [5, 0, 0], [0, 270, 0]); // arms: -x, +y, +z
+  asm.addPart("connector-3d3w-foot", [0, 0, 5], [0, 90, 0]); // arms: +x, +y, -z
+  asm.addPart("connector-3d3w-foot", [5, 0, 5], [0, 180, 0]); // arms: -x, +y, -z
 
   // Vertical supports on each corner
   asm.addPart("support-5u", [0, 1, 0], [0, 0, 0], "y");
@@ -101,10 +103,10 @@ await page.evaluate(() => {
   asm.addPart("support-4u", [5, 0, 1], [0, 0, 0], "z");
 
   // Top connectors (arms face down toward vertical supports + out toward horizontal)
-  asm.addPart("connector-3d3w", [0, 6, 0], [90, 0, 0]);       // arms: +x, -y, +z
-  asm.addPart("connector-3d3w", [5, 6, 0], [90, 270, 0]);     // arms: -x, -y, +z
-  asm.addPart("connector-3d3w", [0, 6, 5], [180, 0, 0]);      // arms: +x, -y, -z
-  asm.addPart("connector-3d3w", [5, 6, 5], [180, 270, 0]);    // arms: -x, -y, -z
+  asm.addPart("connector-3d3w", [0, 6, 0], [90, 0, 0]); // arms: +x, -y, +z
+  asm.addPart("connector-3d3w", [5, 6, 0], [90, 270, 0]); // arms: -x, -y, +z
+  asm.addPart("connector-3d3w", [0, 6, 5], [180, 0, 0]); // arms: +x, -y, -z
+  asm.addPart("connector-3d3w", [5, 6, 5], [180, 270, 0]); // arms: -x, -y, -z
 
   // Top horizontal supports along X axis (front and back)
   asm.addPart("support-4u", [1, 6, 0], [0, 0, 0], "x");
@@ -129,9 +131,14 @@ const layoutInfo = await page.evaluate(() => {
     const cs = getComputedStyle(el);
     return {
       selector: sel,
-      x: r.x, y: r.y, width: r.width, height: r.height,
-      display: cs.display, flexDirection: cs.flexDirection,
-      overflow: cs.overflow, position: cs.position,
+      x: r.x,
+      y: r.y,
+      width: r.width,
+      height: r.height,
+      display: cs.display,
+      flexDirection: cs.flexDirection,
+      overflow: cs.overflow,
+      position: cs.position,
     };
   };
   return {
@@ -150,7 +157,9 @@ const layoutInfo = await page.evaluate(() => {
 console.log("\n=== Layout Info ===");
 for (const [key, val] of Object.entries(layoutInfo)) {
   if (val) {
-    console.log(`${key}: ${val.width}x${val.height} at (${val.x},${val.y}) display=${val.display} flex=${val.flexDirection}`);
+    console.log(
+      `${key}: ${val.width}x${val.height} at (${val.x},${val.y}) display=${val.display} flex=${val.flexDirection}`,
+    );
   } else {
     console.log(`${key}: NOT FOUND`);
   }

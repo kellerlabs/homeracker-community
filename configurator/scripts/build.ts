@@ -44,12 +44,9 @@ const indexContent = readFileSync(join(PROJECT_ROOT, "index.html"), "utf-8");
 const rewritten = indexContent
   .replace(
     '<script type="module" src="/src/main.tsx"></script>',
-    `<script type="module" src="./${jsFilename}"></script>`
+    `<script type="module" src="./${jsFilename}"></script>`,
   )
-  .replace(
-    'href="/src/styles/main.css"',
-    'href="./styles/main.css"'
-  );
+  .replace('href="/src/styles/main.css"', 'href="./styles/main.css"');
 writeFileSync(join(DIST_DIR, "index.html"), rewritten);
 
 // Copy public/ assets to dist/

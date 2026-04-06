@@ -5,9 +5,7 @@ test.describe("Auto-rotation for connector snapping", () => {
     await page.evaluate(() => (window as any).__assembly.clear());
   });
 
-  test("L-shape corner: 2D-2W rotates to face both supports", async ({
-    appPage: page,
-  }) => {
+  test("L-shape corner: 2D-2W rotates to face both supports", async ({ appPage: page }) => {
     // Place a Y-support at [0,0,0] (cells [0,0,0]..[0,2,0])
     // and an X-support starting at [0,3,0] (cells [0,3,0],[1,3,0],[2,3,0])
     // The connector snap point at [0,3,0] should see:
@@ -62,9 +60,7 @@ test.describe("Auto-rotation for connector snapping", () => {
     expect(armsCovered).toEqual([90, 0, 0]);
   });
 
-  test("3-way junction: 3D-3W rotates to face three supports", async ({
-    appPage: page,
-  }) => {
+  test("3-way junction: 3D-3W rotates to face three supports", async ({ appPage: page }) => {
     // Place three supports meeting near [0,3,0]:
     // Y-support: [0,0,0]..[0,2,0], top endpoint [0,2,0] outward +y → connector at [0,3,0], needed -y
     // X-support: [1,3,0]..[3,3,0], left endpoint [1,3,0] outward -x → connector at [0,3,0], needed +x
@@ -108,9 +104,7 @@ test.describe("Auto-rotation for connector snapping", () => {
     expect(result.autoRotation).toBeDefined();
   });
 
-  test("single support endpoint: 1D-1W rotates arm toward support", async ({
-    appPage: page,
-  }) => {
+  test("single support endpoint: 1D-1W rotates arm toward support", async ({ appPage: page }) => {
     // Y-support: [0,0,0]..[0,2,0], top endpoint outward +y → connector at [0,3,0], needed -y
     // 1D-1W base arm: [+z]. Need rotation to get -y.
     // Rotation [90,0,0]: +z→-y. ✓ Total steps = 1, simplest.
@@ -134,9 +128,7 @@ test.describe("Auto-rotation for connector snapping", () => {
     expect(result.autoRotation).toEqual([90, 0, 0]);
   });
 
-  test("no supports nearby: returns fallback rotation", async ({
-    appPage: page,
-  }) => {
+  test("no supports nearby: returns fallback rotation", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const snap = (window as any).__snap;
       const fallback = [90, 0, 0] as [number, number, number];
@@ -147,9 +139,7 @@ test.describe("Auto-rotation for connector snapping", () => {
     expect(result).toEqual([90, 0, 0]);
   });
 
-  test("6-way connector covers all directions at 6-support junction", async ({
-    appPage: page,
-  }) => {
+  test("6-way connector covers all directions at 6-support junction", async ({ appPage: page }) => {
     // 3D-6W has all 6 arms, so any rotation covers all directions.
     // Auto-rotation should prefer [0,0,0] (simplest).
     const result = await page.evaluate(() => {

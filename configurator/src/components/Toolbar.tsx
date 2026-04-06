@@ -43,30 +43,18 @@ export function Toolbar({
         <button className="toolbar-btn" onClick={onUndo} title="Undo (Ctrl+Z)">
           Undo
         </button>
-        <button
-          className="toolbar-btn"
-          onClick={onRedo}
-          title="Redo (Ctrl+Shift+Z)"
-        >
+        <button className="toolbar-btn" onClick={onRedo} title="Redo (Ctrl+Shift+Z)">
           Redo
         </button>
       </div>
 
       <div className="toolbar-group">
         {onDelete && (
-          <button
-            className="toolbar-btn toolbar-btn-danger"
-            onClick={onDelete}
-            title="Delete selected (Del)"
-          >
+          <button className="toolbar-btn toolbar-btn-danger" onClick={onDelete} title="Delete selected (Del)">
             Delete{selectedCount > 1 ? ` (${selectedCount})` : ""}
           </button>
         )}
-        <button
-          className="toolbar-btn toolbar-btn-danger"
-          onClick={onClear}
-          title="Clear all parts"
-        >
+        <button className="toolbar-btn toolbar-btn-danger" onClick={onClear} title="Clear all parts">
           Clear All
         </button>
       </div>
@@ -111,9 +99,7 @@ export function Toolbar({
 
       {mode.type === "place" && (
         <div className="toolbar-group">
-          <span className="toolbar-mode-label">
-            Placing: {mode.definitionId}
-          </span>
+          <span className="toolbar-mode-label">Placing: {mode.definitionId}</span>
           <button className="toolbar-btn" onClick={onEscape}>
             Cancel (Esc)
           </button>
@@ -122,9 +108,7 @@ export function Toolbar({
 
       {mode.type === "paste" && (
         <div className="toolbar-group">
-          <span className="toolbar-mode-label">
-            Pasting {mode.clipboard.parts.length} part(s)
-          </span>
+          <span className="toolbar-mode-label">Pasting {mode.clipboard.parts.length} part(s)</span>
           <button className="toolbar-btn" onClick={onEscape}>
             Cancel (Esc)
           </button>

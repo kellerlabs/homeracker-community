@@ -1,9 +1,7 @@
 import { test, expect } from "./fixtures";
 
 test.describe("Pull-through connector collision", () => {
-  test("PT connector can be placed on a support along the matching axis", async ({
-    appPage: page,
-  }) => {
+  test("PT connector can be placed on a support along the matching axis", async ({ appPage: page }) => {
     // Place a support at [0,0,0] oriented along Z
     const supportId = await page.evaluate(() => {
       const a = (window as any).__assembly;
@@ -20,9 +18,7 @@ test.describe("Pull-through connector collision", () => {
     expect(ptId).toBeTruthy();
   });
 
-  test("support can be placed through an existing PT connector", async ({
-    appPage: page,
-  }) => {
+  test("support can be placed through an existing PT connector", async ({ appPage: page }) => {
     // Place a PT-Z connector at [0,0,0]
     const ptId = await page.evaluate(() => {
       const a = (window as any).__assembly;
@@ -39,9 +35,7 @@ test.describe("Pull-through connector collision", () => {
     expect(supportId).toBeTruthy();
   });
 
-  test("PT connector allows support on any axis (not just matching PT axis)", async ({
-    appPage: page,
-  }) => {
+  test("PT connector allows support on any axis (not just matching PT axis)", async ({ appPage: page }) => {
     // Place a support at [0,0,0] oriented along X
     await page.evaluate(() => {
       const a = (window as any).__assembly;
@@ -57,9 +51,7 @@ test.describe("Pull-through connector collision", () => {
     expect(ptId).toBeTruthy();
   });
 
-  test("regular connector can also overlap supports (no collision)", async ({
-    appPage: page,
-  }) => {
+  test("regular connector can also overlap supports (no collision)", async ({ appPage: page }) => {
     // Place a support at [0,0,0] oriented along Z
     await page.evaluate(() => {
       const a = (window as any).__assembly;
@@ -75,9 +67,7 @@ test.describe("Pull-through connector collision", () => {
     expect(connId).toBeTruthy();
   });
 
-  test("PT connector respects rotation when checking axis match", async ({
-    appPage: page,
-  }) => {
+  test("PT connector respects rotation when checking axis match", async ({ appPage: page }) => {
     // Place a support along X
     await page.evaluate(() => {
       const a = (window as any).__assembly;
@@ -93,9 +83,7 @@ test.describe("Pull-through connector collision", () => {
     expect(ptId).toBeTruthy();
   });
 
-  test("PT connector with rotation still allows any support through", async ({
-    appPage: page,
-  }) => {
+  test("PT connector with rotation still allows any support through", async ({ appPage: page }) => {
     // Place a support along Y
     await page.evaluate(() => {
       const a = (window as any).__assembly;

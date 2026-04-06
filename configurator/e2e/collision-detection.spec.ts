@@ -7,24 +7,26 @@ test.describe("Collision detection", () => {
 
   // --- Grid-level collision (fast, synchronous) ---
 
-  test("two connectors at the same position are detected as colliding (grid)", async ({
-    appPage: page,
-  }) => {
+  test("two connectors at the same position are detected as colliding (grid)", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       const id1 = a.addPart("connector-2d2w", [0, 0, 0]);
       const id2 = a.addPart("connector-2d2w", [0, 0, 0]);
       const { detectCollidingPartIds } = (window as any).__collision;
       const colliding = detectCollidingPartIds(a);
-      return { id1, id2, has1: colliding.has(id1), has2: colliding.has(id2), size: colliding.size };
+      return {
+        id1,
+        id2,
+        has1: colliding.has(id1),
+        has2: colliding.has(id2),
+        size: colliding.size,
+      };
     });
     expect(result.has1).toBe(true);
     expect(result.has2).toBe(true);
   });
 
-  test("two connectors far apart do NOT collide (grid)", async ({
-    appPage: page,
-  }) => {
+  test("two connectors far apart do NOT collide (grid)", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       a.addPart("connector-2d2w", [0, 0, 0]);
@@ -36,9 +38,7 @@ test.describe("Collision detection", () => {
     expect(result).toBe(0);
   });
 
-  test("PT connector and support at same cell are NOT colliding (grid PT exemption)", async ({
-    appPage: page,
-  }) => {
+  test("PT connector and support at same cell are NOT colliding (grid PT exemption)", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       // Support along Y; PT-Z connector rotated 90deg around X so effective PT axis = Y
@@ -67,9 +67,7 @@ test.describe("Collision detection", () => {
     expect(result.hasC2).toBe(true);
   });
 
-  test("adjacent parts (no shared cells) do NOT collide (grid)", async ({
-    appPage: page,
-  }) => {
+  test("adjacent parts (no shared cells) do NOT collide (grid)", async ({ appPage: page }) => {
     // support-1u at [0,0,0] occupies cell [0,0,0]
     // support-1u at [0,1,0] occupies cell [0,1,0]
     // They are adjacent but not overlapping
@@ -83,9 +81,7 @@ test.describe("Collision detection", () => {
     expect(result).toBe(0);
   });
 
-  test("connector nudged 0.2 into a support shares grid cell (grid is conservative)", async ({
-    appPage: page,
-  }) => {
+  test("connector nudged 0.2 into a support shares grid cell (grid is conservative)", async ({ appPage: page }) => {
     // Grid-level detection is conservative: shared cell = flagged
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
@@ -99,9 +95,7 @@ test.describe("Collision detection", () => {
 
   // --- Fine mesh collision (async, BVH-based) ---
 
-  test("two connectors at the same position are detected as colliding (mesh)", async ({
-    appPage: page,
-  }) => {
+  test("two connectors at the same position are detected as colliding (mesh)", async ({ appPage: page }) => {
     // Place parts and wait for GLB geometries to register
     const ids = await page.evaluate(() => {
       const a = (window as any).__assembly;
@@ -128,16 +122,18 @@ test.describe("Collision detection", () => {
       const a = (window as any).__assembly;
       const { detectCollidingPartIdsMesh } = (window as any).__collision;
       const colliding = await detectCollidingPartIdsMesh(a);
-      return { has1: colliding.has(ids.id1), has2: colliding.has(ids.id2), size: colliding.size };
+      return {
+        has1: colliding.has(ids.id1),
+        has2: colliding.has(ids.id2),
+        size: colliding.size,
+      };
     }, ids);
 
     expect(result.has1).toBe(true);
     expect(result.has2).toBe(true);
   });
 
-  test("two connectors far apart do NOT collide (mesh)", async ({
-    appPage: page,
-  }) => {
+  test("two connectors far apart do NOT collide (mesh)", async ({ appPage: page }) => {
     await page.evaluate(() => {
       const a = (window as any).__assembly;
       a.addPart("connector-2d2w", [0, 0, 0]);
@@ -166,9 +162,7 @@ test.describe("Collision detection", () => {
     expect(result).toBe(0);
   });
 
-  test("PT connector + support along matching axis do NOT collide (mesh)", async ({
-    appPage: page,
-  }) => {
+  test("PT connector + support along matching axis do NOT collide (mesh)", async ({ appPage: page }) => {
     await page.evaluate(() => {
       const a = (window as any).__assembly;
       a.addPart("support-3u", [0, 0, 0], [0, 0, 0], "z");
@@ -197,9 +191,7 @@ test.describe("Collision detection", () => {
     expect(result).toBe(0);
   });
 
-  test("adjacent parts with small gap do NOT collide (mesh)", async ({
-    appPage: page,
-  }) => {
+  test("adjacent parts with small gap do NOT collide (mesh)", async ({ appPage: page }) => {
     // Place two supports side by side with 1 grid cell gap
     await page.evaluate(() => {
       const a = (window as any).__assembly;
@@ -229,9 +221,7 @@ test.describe("Collision detection", () => {
     expect(result).toBe(0);
   });
 
-  test("connector-3d5w adjacent to support-14u along z should NOT collide", async ({
-    appPage: page,
-  }) => {
+  test("connector-3d5w adjacent to support-14u along z should NOT collide", async ({ appPage: page }) => {
     // From user save: support-14u at [-1.6, 0, 3.7] oriented "z", connector-3d5w at [-1.6, 0, 2.7]
     const ids = await page.evaluate(() => {
       const a = (window as any).__assembly;
@@ -286,9 +276,7 @@ test.describe("Collision detection", () => {
     expect(meshResult.size).toBe(0);
   });
 
-  test("mesh collision can be cancelled via AbortSignal", async ({
-    appPage: page,
-  }) => {
+  test("mesh collision can be cancelled via AbortSignal", async ({ appPage: page }) => {
     await page.evaluate(() => {
       const a = (window as any).__assembly;
       // Place overlapping parts so there's real work to do
@@ -309,9 +297,7 @@ test.describe("Collision detection", () => {
     expect(result).toBe(0);
   });
 
-  test("PT connector offset from support SHOULD collide (misaligned PT)", async ({
-    appPage: page,
-  }) => {
+  test("PT connector offset from support SHOULD collide (misaligned PT)", async ({ appPage: page }) => {
     // PT-Z connector at [-1,0,4] and support-14u at [-1.6,0,3.7] oriented "z"
     // The connector is offset 0.6 grid units in x — support doesn't pass through the hole
     const ids = await page.evaluate(() => {

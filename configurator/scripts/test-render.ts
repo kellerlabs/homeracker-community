@@ -37,7 +37,10 @@ const server = Bun.serve({
     if (pathname.startsWith("/src/")) {
       const mapped = pathname.replace("/src/", "").replace(".tsx", ".js").replace(".ts", ".js");
       const file = Bun.file(join(DIST_DIR, mapped));
-      if (await file.exists()) return new Response(file, { headers: { "Content-Type": "application/javascript" } });
+      if (await file.exists())
+        return new Response(file, {
+          headers: { "Content-Type": "application/javascript" },
+        });
     }
 
     if (pathname !== "/" && pathname !== "/index.html") {
@@ -48,10 +51,9 @@ const server = Bun.serve({
     }
 
     const html = await Bun.file(join(PROJECT_ROOT, "index.html")).text();
-    return new Response(
-      html.replace('src="/src/main.tsx"', 'src="/src/main.js"'),
-      { headers: { "Content-Type": "text/html" } }
-    );
+    return new Response(html.replace('src="/src/main.tsx"', 'src="/src/main.js"'), {
+      headers: { "Content-Type": "text/html" },
+    });
   },
 });
 

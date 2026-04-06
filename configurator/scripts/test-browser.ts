@@ -28,7 +28,10 @@ if (!buildResult.success) {
   process.exit(1);
 }
 
-console.log("Build succeeded:", buildResult.outputs.map(o => o.path));
+console.log(
+  "Build succeeded:",
+  buildResult.outputs.map((o) => o.path),
+);
 
 // Step 2: Check output files exist
 const mainJs = join(DIST_DIR, "main.js");
@@ -109,7 +112,7 @@ const server = Bun.serve({
     const indexContent = await Bun.file(indexPath).text();
     const rewritten = indexContent.replace(
       '<script type="module" src="/src/main.tsx"></script>',
-      '<script type="module" src="/src/main.js"></script>'
+      '<script type="module" src="/src/main.js"></script>',
     );
     return new Response(rewritten, {
       headers: { "Content-Type": "text/html" },

@@ -21,14 +21,11 @@ test.describe("Layout", () => {
 });
 
 test.describe("Catalog", () => {
-  test("has 36 items and none active initially", async ({
-    appPage: page,
-  }) => {
+  test("has 36 items and none active initially", async ({ appPage: page }) => {
     const catalogItems = await page.evaluate(() => {
       const items = document.querySelectorAll(".catalog-item");
       return Array.from(items).map((el) => ({
-        name:
-          el.querySelector(".catalog-item-name")?.textContent?.trim() ?? "",
+        name: el.querySelector(".catalog-item-name")?.textContent?.trim() ?? "",
         active: el.classList.contains("active"),
       }));
     });
@@ -40,10 +37,7 @@ test.describe("Catalog", () => {
   test("contains expected part names", async ({ appPage: page }) => {
     const catalogNames = await page.evaluate(() => {
       const items = document.querySelectorAll(".catalog-item");
-      return Array.from(items).map(
-        (el) =>
-          el.querySelector(".catalog-item-name")?.textContent?.trim() ?? ""
-      );
+      return Array.from(items).map((el) => el.querySelector(".catalog-item-name")?.textContent?.trim() ?? "");
     });
 
     const expectedParts = [
@@ -72,22 +66,15 @@ test.describe("Catalog", () => {
 });
 
 test.describe("Placement mode", () => {
-  test("clicking catalog item enters placement mode", async ({
-    appPage: page,
-  }) => {
+  test("clicking catalog item enters placement mode", async ({ appPage: page }) => {
     await clickCatalogItem(page, "3D 6-Way");
 
     const afterClick = await page.evaluate(() => {
       const items = document.querySelectorAll(".catalog-item");
-      const activeItem = Array.from(items).find((el) =>
-        el.classList.contains("active")
-      );
+      const activeItem = Array.from(items).find((el) => el.classList.contains("active"));
       const hint = document.querySelector(".viewport-hint");
       return {
-        activeName:
-          activeItem
-            ?.querySelector(".catalog-item-name")
-            ?.textContent?.trim() ?? null,
+        activeName: activeItem?.querySelector(".catalog-item-name")?.textContent?.trim() ?? null,
         hintVisible: !!hint,
         hintText: hint?.textContent?.trim() ?? null,
       };
@@ -101,16 +88,11 @@ test.describe("Placement mode", () => {
   test("Escape exits placement mode", async ({ appPage: page }) => {
     await clickCatalogItem(page, "3D 6-Way");
     await page.keyboard.press("Escape");
-    await page.waitForFunction(
-      () => !document.querySelector(".catalog-item.active"),
-      { timeout: 3_000 },
-    );
+    await page.waitForFunction(() => !document.querySelector(".catalog-item.active"), { timeout: 3_000 });
 
     const afterEscape = await page.evaluate(() => {
       const items = document.querySelectorAll(".catalog-item");
-      const activeItem = Array.from(items).find((el) =>
-        el.classList.contains("active")
-      );
+      const activeItem = Array.from(items).find((el) => el.classList.contains("active"));
       const hint = document.querySelector(".viewport-hint");
       return {
         anyActive: !!activeItem,
@@ -125,18 +107,14 @@ test.describe("Placement mode", () => {
   test("switching between catalog items", async ({ appPage: page }) => {
     await clickCatalogItem(page, "Support (5u)");
     const active1 = await page.evaluate(() => {
-      const active = document.querySelector(
-        ".catalog-item.active .catalog-item-name"
-      );
+      const active = document.querySelector(".catalog-item.active .catalog-item-name");
       return active?.textContent?.trim() ?? null;
     });
     expect(active1).toBe("Support (5u)");
 
     await clickCatalogItem(page, "Lock Pin");
     const active2 = await page.evaluate(() => {
-      const active = document.querySelector(
-        ".catalog-item.active .catalog-item-name"
-      );
+      const active = document.querySelector(".catalog-item.active .catalog-item-name");
       return active?.textContent?.trim() ?? null;
     });
     expect(active2).toBe("Lock Pin");
@@ -144,9 +122,7 @@ test.describe("Placement mode", () => {
 });
 
 test.describe("Ghost preview", () => {
-  test("data-placing attribute matches selected part", async ({
-    appPage: page,
-  }) => {
+  test("data-placing attribute matches selected part", async ({ appPage: page }) => {
     const partNameToId: Record<string, string> = {
       "1D 1-Way": "connector-1d1w",
       "1D 2-Way": "connector-1d2w",
@@ -171,22 +147,17 @@ test.describe("Ghost preview", () => {
     for (const [partName, expectedId] of Object.entries(partNameToId)) {
       await clickCatalogItem(page, partName);
       const placing = await page.evaluate(
-        () =>
-          document.querySelector(".viewport")?.getAttribute("data-placing") ??
-          null
+        () => document.querySelector(".viewport")?.getAttribute("data-placing") ?? null,
       );
       expect(placing, `Ghost for "${partName}"`).toBe(expectedId);
     }
 
     await page.keyboard.press("Escape");
-    await page.waitForFunction(
-      () => !document.querySelector(".viewport")?.getAttribute("data-placing"),
-      { timeout: 3_000 },
-    );
+    await page.waitForFunction(() => !document.querySelector(".viewport")?.getAttribute("data-placing"), {
+      timeout: 3_000,
+    });
     const noGhost = await page.evaluate(
-      () =>
-        document.querySelector(".viewport")?.getAttribute("data-placing") ??
-        null
+      () => document.querySelector(".viewport")?.getAttribute("data-placing") ?? null,
     );
     expect(noGhost).toBeNull();
   });

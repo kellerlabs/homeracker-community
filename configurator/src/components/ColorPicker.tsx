@@ -24,10 +24,13 @@ interface ColorPickerProps {
 export function ColorPicker({ currentColor, onColorChange }: ColorPickerProps) {
   const [customHex, setCustomHex] = useState(currentColor ?? "");
 
-  const handleSwatchClick = useCallback((hex: string) => {
-    onColorChange(hex);
-    setCustomHex(hex);
-  }, [onColorChange]);
+  const handleSwatchClick = useCallback(
+    (hex: string) => {
+      onColorChange(hex);
+      setCustomHex(hex);
+    },
+    [onColorChange],
+  );
 
   const handleReset = useCallback(() => {
     onColorChange(undefined);
@@ -47,11 +50,7 @@ export function ColorPicker({ currentColor, onColorChange }: ColorPickerProps) {
     <div className="color-picker">
       <div className="color-picker-header">
         <span className="color-picker-label">Color</span>
-        <button
-          className="color-picker-reset"
-          onClick={handleReset}
-          title="Reset to default category color"
-        >
+        <button className="color-picker-reset" onClick={handleReset} title="Reset to default category color">
           Reset
         </button>
       </div>
@@ -67,16 +66,15 @@ export function ColorPicker({ currentColor, onColorChange }: ColorPickerProps) {
         ))}
       </div>
       <div className="color-custom-row">
-        <div
-          className="color-preview"
-          style={{ backgroundColor: currentColor ?? "#666" }}
-        />
+        <div className="color-preview" style={{ backgroundColor: currentColor ?? "#666" }} />
         <input
           className="color-hex-input"
           type="text"
           value={customHex}
           onChange={(e) => setCustomHex(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") handleCustomSubmit(); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleCustomSubmit();
+          }}
           placeholder="#ff0000"
           maxLength={7}
         />

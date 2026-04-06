@@ -8,10 +8,7 @@ import type { GridPosition, Axis, Direction, Rotation3, RotationStep } from "../
  * orientation "x" -> swap Y and X: [0,i,0] -> [i,0,0]
  * orientation "z" -> swap Y and Z: [0,i,0] -> [0,0,i]
  */
-export function transformCell(
-  cell: GridPosition,
-  orientation: Axis,
-): GridPosition {
+export function transformCell(cell: GridPosition, orientation: Axis): GridPosition {
   switch (orientation) {
     case "y":
       return cell;
@@ -26,18 +23,10 @@ export function transformCell(
  * Get all world-space grid cells a part would occupy at a position
  * with a given orientation.
  */
-export function getWorldCells(
-  cells: GridPosition[],
-  position: GridPosition,
-  orientation: Axis = "y",
-): GridPosition[] {
+export function getWorldCells(cells: GridPosition[], position: GridPosition, orientation: Axis = "y"): GridPosition[] {
   return cells.map((cell) => {
     const t = transformCell(cell, orientation);
-    return [
-      position[0] + t[0],
-      position[1] + t[1],
-      position[2] + t[2],
-    ] as GridPosition;
+    return [position[0] + t[0], position[1] + t[1], position[2] + t[2]] as GridPosition;
   });
 }
 
@@ -69,15 +58,15 @@ export function orientationToRotation(orientation: Axis): Rotation3 {
  *   90° around Y: [x, y, z] → [z, y, -x]
  *   90° around Z: [x, y, z] → [-y, x, z]
  */
-function rotateCellOnce(
-  cell: GridPosition,
-  axis: 0 | 1 | 2,
-): GridPosition {
+function rotateCellOnce(cell: GridPosition, axis: 0 | 1 | 2): GridPosition {
   const [x, y, z] = cell;
   switch (axis) {
-    case 0: return [x, -z, y];   // X-axis
-    case 1: return [z, y, -x];   // Y-axis
-    case 2: return [-y, x, z];   // Z-axis
+    case 0:
+      return [x, -z, y]; // X-axis
+    case 1:
+      return [z, y, -x]; // Y-axis
+    case 2:
+      return [-y, x, z]; // Z-axis
   }
 }
 
@@ -103,10 +92,7 @@ function rotateCellByRotation3(cell: GridPosition, rotation: Rotation3): GridPos
  * Rotate an array of grid cells by a Rotation3.
  * Used to compute world-space occupancy for rotated parts.
  */
-export function rotateGridCells(
-  cells: GridPosition[],
-  rotation: Rotation3,
-): GridPosition[] {
+export function rotateGridCells(cells: GridPosition[], rotation: Rotation3): GridPosition[] {
   // Skip if no rotation
   if (rotation[0] === 0 && rotation[1] === 0 && rotation[2] === 0) {
     return cells;
@@ -128,12 +114,18 @@ export function rotateDirection(direction: Direction, rotation: Rotation3): Dire
 
 function directionToVector(dir: Direction): GridPosition {
   switch (dir) {
-    case "+x": return [1, 0, 0];
-    case "-x": return [-1, 0, 0];
-    case "+y": return [0, 1, 0];
-    case "-y": return [0, -1, 0];
-    case "+z": return [0, 0, 1];
-    case "-z": return [0, 0, -1];
+    case "+x":
+      return [1, 0, 0];
+    case "-x":
+      return [-1, 0, 0];
+    case "+y":
+      return [0, 1, 0];
+    case "-y":
+      return [0, -1, 0];
+    case "+z":
+      return [0, 0, 1];
+    case "-z":
+      return [0, 0, -1];
   }
 }
 
@@ -179,10 +171,7 @@ export function directionToAxis(direction: Direction): Axis {
 }
 
 /** Get the adjacent grid position in a given direction. */
-export function getAdjacentPosition(
-  pos: GridPosition,
-  direction: Direction,
-): GridPosition {
+export function getAdjacentPosition(pos: GridPosition, direction: Direction): GridPosition {
   const [x, y, z] = pos;
   switch (direction) {
     case "+x":

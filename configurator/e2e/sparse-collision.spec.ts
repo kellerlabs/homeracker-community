@@ -18,10 +18,18 @@ function createSparseSTL(): ArrayBuffer {
 
   // Helper to write a triangle (normal + 3 vertices + attribute)
   function writeTri(
-    nx: number, ny: number, nz: number,
-    x0: number, y0: number, z0: number,
-    x1: number, y1: number, z1: number,
-    x2: number, y2: number, z2: number,
+    nx: number,
+    ny: number,
+    nz: number,
+    x0: number,
+    y0: number,
+    z0: number,
+    x1: number,
+    y1: number,
+    z1: number,
+    x2: number,
+    y2: number,
+    z2: number,
   ) {
     for (const v of [nx, ny, nz, x0, y0, z0, x1, y1, z1, x2, y2, z2]) {
       view.setFloat32(offset, v, true);
@@ -44,19 +52,17 @@ test.describe("Sparse collision: perpendicular supports can cross", () => {
     await page.evaluate(() => (window as any).__assembly.clear());
   });
 
-  test("vertical and horizontal supports can share a cell", async ({
-    appPage: page,
-  }) => {
+  test("vertical and horizontal supports can share a cell", async ({ appPage: page }) => {
     // Place a vertical support (y-oriented) spanning cells [0,0,0] to [0,4,0]
     const verticalId = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-5u", [0, 0, 0], [0, 0, 0], "y")
+      (window as any).__assembly.addPart("support-5u", [0, 0, 0], [0, 0, 0], "y"),
     );
     expect(verticalId).not.toBeNull();
 
     // Place a horizontal support (x-oriented) at [0,2,0] spanning [-2..2, 2, 0]
     // This crosses the vertical support at cell [0,2,0]
     const horizontalId = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-5u", [-2, 2, 0], [0, 0, 0], "x")
+      (window as any).__assembly.addPart("support-5u", [-2, 2, 0], [0, 0, 0], "x"),
     );
 
     // Currently fails because cell [0,2,0] is occupied by the vertical support.
@@ -65,63 +71,43 @@ test.describe("Sparse collision: perpendicular supports can cross", () => {
     expect(horizontalId).not.toBeNull();
   });
 
-  test("three perpendicular supports can all share one cell", async ({
-    appPage: page,
-  }) => {
+  test("three perpendicular supports can all share one cell", async ({ appPage: page }) => {
     // Place Y-axis support spanning [0,0,0] to [0,2,0]
-    const yId = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-3u", [0, 0, 0], [0, 0, 0], "y")
-    );
+    const yId = await page.evaluate(() => (window as any).__assembly.addPart("support-3u", [0, 0, 0], [0, 0, 0], "y"));
     expect(yId).not.toBeNull();
 
     // Place X-axis support crossing at [0,1,0]
-    const xId = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-3u", [-1, 1, 0], [0, 0, 0], "x")
-    );
+    const xId = await page.evaluate(() => (window as any).__assembly.addPart("support-3u", [-1, 1, 0], [0, 0, 0], "x"));
     expect(xId).not.toBeNull();
 
     // Place Z-axis support also crossing at [0,1,0]
-    const zId = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-3u", [0, 1, -1], [0, 0, 0], "z")
-    );
+    const zId = await page.evaluate(() => (window as any).__assembly.addPart("support-3u", [0, 1, -1], [0, 0, 0], "z"));
     expect(zId).not.toBeNull();
   });
 
-  test("same-axis supports can overlap (no collision)", async ({
-    appPage: page,
-  }) => {
+  test("same-axis supports can overlap (no collision)", async ({ appPage: page }) => {
     // Place a vertical support at [0,0,0]
-    const id1 = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-5u", [0, 0, 0], [0, 0, 0], "y")
-    );
+    const id1 = await page.evaluate(() => (window as any).__assembly.addPart("support-5u", [0, 0, 0], [0, 0, 0], "y"));
     expect(id1).not.toBeNull();
 
     // Place another vertical support overlapping at [0,0,0] — succeeds (no collision system)
-    const id2 = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-3u", [0, 0, 0], [0, 0, 0], "y")
-    );
+    const id2 = await page.evaluate(() => (window as any).__assembly.addPart("support-3u", [0, 0, 0], [0, 0, 0], "y"));
     expect(id2).not.toBeNull();
   });
 
-  test("connector and support can overlap (no collision)", async ({
-    appPage: page,
-  }) => {
+  test("connector and support can overlap (no collision)", async ({ appPage: page }) => {
     // Connector at [0,1,0]
-    const connId = await page.evaluate(() =>
-      (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0])
-    );
+    const connId = await page.evaluate(() => (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0]));
     expect(connId).not.toBeNull();
 
     // Support crossing through the connector cell — succeeds (no collision system)
     const supportId = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-3u", [-1, 1, 0], [0, 0, 0], "x")
+      (window as any).__assembly.addPart("support-3u", [-1, 1, 0], [0, 0, 0], "x"),
     );
     expect(supportId).not.toBeNull();
   });
 
-  test("custom part with hollow interior allows placement inside", async ({
-    appPage: page,
-  }) => {
+  test("custom part with hollow interior allows placement inside", async ({ appPage: page }) => {
     // Import a sparse STL: geometry in cells [0,0,0] and [2,0,0],
     // but cell [1,0,0] is empty (hollow interior).
     // Bounding box spans 3 cells, but only 2 have actual triangles.
@@ -138,16 +124,13 @@ test.describe("Sparse collision: perpendicular supports can cross", () => {
     expect(customId).toBeTruthy();
 
     // Place the custom part at [0,0,0]
-    const placed = await page.evaluate((id: string) =>
-      (window as any).__assembly.addPart(id, [0, 0, 0]),
-      customId
-    );
+    const placed = await page.evaluate((id: string) => (window as any).__assembly.addPart(id, [0, 0, 0]), customId);
     expect(placed).not.toBeNull();
 
     // The hollow interior (cell [1,0,0]) should NOT be occupied.
     // A support along Y-axis at [1,0,0] should be placeable.
     const supportId = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-1u", [1, 0, 0], [0, 0, 0], "y")
+      (window as any).__assembly.addPart("support-1u", [1, 0, 0], [0, 0, 0], "y"),
     );
 
     // This FAILS with the current code because importSTL fills the entire

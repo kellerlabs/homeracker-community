@@ -2,9 +2,7 @@ import { test, expect } from "./fixtures";
 import cuberack from "./fixtures/cuberack.json" with { type: "json" };
 
 test.describe("BOM lock pin calculation with cuberack fixture", () => {
-  test("cuberack has 24 lock pins needed (+ spare)", async ({
-    appPage: page,
-  }) => {
+  test("cuberack has 24 lock pins needed (+ spare)", async ({ appPage: page }) => {
     // Load the cuberack fixture (skip custom-stl-1 which won't resolve)
     await page.evaluate((data) => {
       const a = (window as any).__assembly;
@@ -22,9 +20,7 @@ test.describe("BOM lock pin calculation with cuberack fixture", () => {
       return a.getBOM();
     });
 
-    const lockPinEntry = bom.find(
-      (e: any) => e.category === "lockpin"
-    );
+    const lockPinEntry = bom.find((e: any) => e.category === "lockpin");
 
     expect(lockPinEntry).toBeTruthy();
     // 8 connectors × 3 arms each = 24 arms, all adjacent to supports
