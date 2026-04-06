@@ -465,26 +465,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  border: 1px solid var(--bg-primary);
   border-radius: 999px;
   padding: 3px;
   font-size: 11px;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #f4f8ff;
   cursor: pointer;
   overflow: hidden;
-  background: rgba(10, 16, 32, 0.62);
+  background: var(--bg-secondary);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 .viewport-camera-toggle--ortho {
-  border-color: rgba(120, 210, 140, 0.45);
+  border-color: var(--bg-primary);
+  background: var(--bg-secondary);
 }
 
 .viewport-camera-toggle--persp {
-  border-color: rgba(130, 180, 255, 0.45);
+  border-color: var(--bg-primary);
+  background: var(--bg-secondary);
 }
 
 .viewport-camera-toggle__thumb {
@@ -493,11 +495,11 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(180deg, #ffffff, #d9e9ff);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.42);
   transform: translateX(0);
   transition: transform 0.3s ease;
 }
@@ -525,7 +527,7 @@
 .viewport-camera-toggle__thumb svg {
   width: 16px;
   height: 16px;
-  color: #2c3448;
+  color: #17499a;
 }
 
   .box-select-overlay {
