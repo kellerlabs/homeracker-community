@@ -1,6 +1,6 @@
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { OrbitControls, Grid, GizmoHelper, GizmoViewport, useGLTF } from "@react-three/drei";
-import { useCallback, useRef, useState, useEffect, useMemo, Suspense } from "react";
+import { OrbitControls, Grid, GizmoHelper, GizmoViewport, OrthographicCamera, PerspectiveCamera, useGLTF } from "@react-three/drei";
+import { useCallback, useRef, useState, useEffect, useMemo, Suspense, useLayoutEffect } from "react";
 import * as THREE from "three";
 import { BASE_UNIT, PART_COLORS, GRID_EXTENT } from "../constants";
 import type { PlacedPart, InteractionMode, GridPosition, Rotation3, RotationStep, Axis, DragState, ClipboardData } from "../types";
@@ -53,6 +53,37 @@ interface ViewportProps {
   snapEnabled: boolean;
   showCollisions: boolean;
   fineMeshCollisions: boolean;
+}
+
+const CAMERA_MODE_STORAGE_KEY = "homeracker-camera-orthographic";
+
+type CameraSwitchSnapshot = {
+  position: THREE.Vector3;
+  quaternion: THREE.Quaternion;
+  target: THREE.Vector3;
+  fov?: number;
+  frustumHeight?: number;
+  zoom?: number;
+};
+
+function OrthoIcon() {
+  return (
+    <svg viewBox="641.712 107.069 51.822 62.187" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M 667.623 139.077 L 641.712 123.073 L 667.623 107.069 L 693.534 123.073 L 667.623 139.077 Z" />
+      <path fill="currentColor" d="M 667.623 169.256 L 667.623 139.077 L 693.534 123.073 L 693.534 153.252 L 667.623 169.256 Z" opacity="0.25" />
+      <path fill="currentColor" d="M 667.623 169.256 L 641.712 153.252 L 641.712 123.073 L 667.623 139.077 L 667.623 169.256 Z" opacity="0.5" />
+    </svg>
+  );
+}
+
+function PerspIcon() {
+  return (
+    <svg viewBox="573.563 112.631 54.108 49.236" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M 600.616 130.34 L 573.563 120.122 L 600.329 112.631 L 627.671 120.122 L 600.616 130.34 Z" />
+      <path fill="currentColor" d="M 600.688 161.817 L 600.616 130.308 L 627.671 119.984 L 627.671 151.494 L 600.688 161.817 Z" opacity="0.25" />
+      <path fill="currentColor" d="M 600.677 161.867 L 573.623 151.692 L 573.623 120.182 L 600.677 130.357 L 600.677 161.867 Z" opacity="0.5" />
+    </svg>
+  );
 }
 
 /** Convert grid coordinates to world position (mm).
@@ -861,18 +892,74 @@ function ExposeScene() {
   return null;
 }
 
+/** Apply stored camera/controls state after switching camera type */
+function ApplyCameraSwitchSnapshot({
+  isOrthographic,
+  snapshotRef,
+}: {
+  isOrthographic: boolean;
+  snapshotRef: React.MutableRefObject<CameraSwitchSnapshot | null>;
+}) {
+  const { camera, controls, size } = useThree();
+
+  useLayoutEffect(() => {
+    const snapshot = snapshotRef.current;
+    if (!snapshot) return;
+    const orbitControls = controls as any;
+    if (!orbitControls?.target) return;
+    const hasExpectedCameraType =
+      (isOrthographic && camera instanceof THREE.OrthographicCamera) ||
+      (!isOrthographic && camera instanceof THREE.PerspectiveCamera);
+    if (!hasExpectedCameraType) return;
+
+    camera.position.copy(snapshot.position);
+    camera.quaternion.copy(snapshot.quaternion);
+    orbitControls.target.copy(snapshot.target);
+
+    const aspect = size.width / Math.max(1, size.height);
+    const distance = camera.position.distanceTo(orbitControls.target);
+
+    if (camera instanceof THREE.OrthographicCamera) {
+      const fov = snapshot.fov ?? 50;
+      const frustumHeight =
+        snapshot.frustumHeight ??
+        (2 * Math.max(distance, 1) * Math.tan((fov * Math.PI) / 360));
+      camera.top = frustumHeight / 2;
+      camera.bottom = -frustumHeight / 2;
+      camera.right = (frustumHeight * aspect) / 2;
+      camera.left = -(frustumHeight * aspect) / 2;
+      if (snapshot.zoom !== undefined) camera.zoom = snapshot.zoom;
+      camera.updateProjectionMatrix();
+    } else if (camera instanceof THREE.PerspectiveCamera) {
+      const frustumHeight = snapshot.frustumHeight;
+      const fov = snapshot.fov ?? (
+        frustumHeight
+          ? THREE.MathUtils.radToDeg(2 * Math.atan(frustumHeight / (2 * Math.max(distance, 1))))
+          : 50
+      );
+      camera.fov = THREE.MathUtils.clamp(fov, 10, 120);
+      camera.updateProjectionMatrix();
+    }
+
+    orbitControls.update();
+    snapshotRef.current = null;
+  }, [isOrthographic, camera, controls, size.width, size.height, snapshotRef]);
+
+  return null;
+}
+
 /** On first render with parts, fit camera to show all placed parts */
 function FitCamera({ parts }: { parts: PlacedPart[] }) {
-  const { camera, controls } = useThree();
   const fitted = useRef(false);
 
   useEffect(() => {
+    (window as any).__cameraFitted = false;
+  }, []);
+
+  useFrame(({ camera, controls, size }) => {
     if (fitted.current || parts.length === 0) return;
-    // Wait for OrbitControls to register via makeDefault
     const orbitControls = controls as any;
     if (!orbitControls?.target) return;
-
-    fitted.current = true;
 
     // Compute bounding box of all part world positions
     let minX = Infinity, minY = Infinity, minZ = Infinity;
@@ -892,6 +979,9 @@ function FitCamera({ parts }: { parts: PlacedPart[] }) {
         minZ = Math.min(minZ, wz); maxZ = Math.max(maxZ, wz + BASE_UNIT);
       }
     }
+    if (!Number.isFinite(minX) || !Number.isFinite(maxX)) return;
+
+    fitted.current = true;
 
     const cx = (minX + maxX) / 2;
     const cy = (minY + maxY) / 2;
@@ -901,17 +991,35 @@ function FitCamera({ parts }: { parts: PlacedPart[] }) {
     const dz = maxZ - minZ;
     const radius = Math.sqrt(dx * dx + dy * dy + dz * dz) / 2;
 
-    // Position camera so the bounding sphere fits in view
-    const fov = (camera as THREE.PerspectiveCamera).fov ?? 50;
-    const dist = Math.max(radius / Math.tan((fov / 2) * Math.PI / 180), 100);
+    const aspect = size.width / Math.max(1, size.height);
+    const dist = Math.max(radius * 1.8, 100);
 
     camera.position.set(cx + dist * 0.6, cy + dist * 0.7, cz + dist * 0.6);
     camera.lookAt(cx, cy, cz);
+
+    if (camera instanceof THREE.OrthographicCamera) {
+      const padding = 1.3;
+      const frustumHeight = Math.max(
+        (dy || BASE_UNIT) * padding,
+        ((dx || BASE_UNIT) * padding) / aspect,
+        ((dz || BASE_UNIT) * padding) / aspect
+      );
+      camera.top = frustumHeight / 2;
+      camera.bottom = -frustumHeight / 2;
+      camera.right = (frustumHeight * aspect) / 2;
+      camera.left = -(frustumHeight * aspect) / 2;
+    } else if (camera instanceof THREE.PerspectiveCamera) {
+      const fov = camera.fov ?? 50;
+      const perspectiveDist = Math.max(radius / Math.tan((fov / 2) * Math.PI / 180), 100);
+      camera.position.set(cx + perspectiveDist * 0.6, cy + perspectiveDist * 0.7, cz + perspectiveDist * 0.6);
+      camera.lookAt(cx, cy, cz);
+    }
     camera.updateProjectionMatrix();
 
     orbitControls.target.set(cx, cy, cz);
     orbitControls.update();
-  }, [parts, camera, controls]);
+    (window as any).__cameraFitted = true;
+  });
 
   return null;
 }
@@ -1148,6 +1256,14 @@ function Scene({
 export function ViewportCanvas(props: ViewportProps) {
   const [computingCollisions, setComputingCollisions] = useState(false);
   const [collidingPartIds, setCollidingPartIds] = useState<Set<string>>(new Set());
+  const [isOrthographic, setIsOrthographic] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(CAMERA_MODE_STORAGE_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const cameraSwitchSnapshotRef = useRef<CameraSwitchSnapshot | null>(null);
 
   const [ghostRotation, setGhostRotation] = useState<Rotation3>([0, 0, 0]);
   const [ghostOrientation, setGhostOrientation] = useState<Axis>("y");
@@ -1219,6 +1335,46 @@ export function ViewportCanvas(props: ViewportProps) {
 
   // Y-axis lift (W/S keys) — additive on top of auto ground lift
   const [yLift, setYLift] = useState(0);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CAMERA_MODE_STORAGE_KEY, isOrthographic ? "1" : "0");
+    } catch {
+      // Ignore storage errors
+    }
+  }, [isOrthographic]);
+
+  const handleToggleCameraMode = useCallback(() => {
+    const camera = (window as any).__camera as THREE.Camera | undefined;
+    const orbitControls = (window as any).__controls as { target?: THREE.Vector3 } | undefined;
+
+    if (camera && orbitControls?.target) {
+      const distance = camera.position.distanceTo(orbitControls.target);
+      let fov: number | undefined;
+      let frustumHeight: number | undefined;
+      let zoom: number | undefined;
+
+      if (camera instanceof THREE.PerspectiveCamera) {
+        fov = camera.fov;
+        frustumHeight = 2 * Math.max(distance, 1) * Math.tan((camera.fov * Math.PI) / 360);
+      } else if (camera instanceof THREE.OrthographicCamera) {
+        // Effective visible height must account for orthographic zoom.
+        frustumHeight = (camera.top - camera.bottom) / Math.max(camera.zoom, 0.0001);
+        zoom = camera.zoom;
+      }
+
+      cameraSwitchSnapshotRef.current = {
+        position: camera.position.clone(),
+        quaternion: camera.quaternion.clone(),
+        target: orbitControls.target.clone(),
+        fov,
+        frustumHeight,
+        zoom,
+      };
+    }
+
+    setIsOrthographic((prev) => !prev);
+  }, []);
 
   // Reset rotation, orientation, and lift when switching parts
   useEffect(() => {
@@ -1469,10 +1625,15 @@ export function ViewportCanvas(props: ViewportProps) {
       onPointerDown={handleViewportPointerDown}
     >
       <Canvas
-        camera={{ position: [150, 200, 150], fov: 50, near: 1, far: 10000 }}
         gl={{ antialias: true }}
         scene={{ background: new THREE.Color("#3d3d5c") }}
       >
+        {isOrthographic ? (
+          <OrthographicCamera makeDefault position={[150, 200, 150]} near={-20000} far={20000} zoom={1} />
+        ) : (
+          <PerspectiveCamera makeDefault position={[150, 200, 150]} fov={50} near={1} far={10000} />
+        )}
+        <ApplyCameraSwitchSnapshot isOrthographic={isOrthographic} snapshotRef={cameraSwitchSnapshotRef} />
         <Scene
           {...props}
           ghostRotation={ghostRotation}
@@ -1487,6 +1648,19 @@ export function ViewportCanvas(props: ViewportProps) {
           collidingPartIds={collidingPartIds}
         />
       </Canvas>
+      <button
+        className={`viewport-camera-toggle ${isOrthographic ? "viewport-camera-toggle--ortho" : "viewport-camera-toggle--persp"}`}
+        type="button"
+        onClick={handleToggleCameraMode}
+        title="Toggle perspective/orthographic camera"
+      >
+        <span className="viewport-camera-toggle__thumb">
+          {isOrthographic ? <OrthoIcon /> : <PerspIcon />}
+        </span>
+        <span className="viewport-camera-toggle__label">
+          {isOrthographic ? "ORTHO" : "PERSP"}
+        </span>
+      </button>
       {boxSelectRect && (
         <div
           className="box-select-overlay"

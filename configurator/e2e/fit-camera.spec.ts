@@ -17,7 +17,7 @@ test.describe("FitCamera on load", () => {
     await page.reload();
     await page.waitForSelector(".app", { timeout: 10_000 });
     await page.waitForFunction(
-      () => !!(window as any).__controls?.target && !!(window as any).__camera,
+      () => !!(window as any).__cameraFitted && !!(window as any).__controls?.target && !!(window as any).__camera,
       { timeout: 10_000 },
     );
 
