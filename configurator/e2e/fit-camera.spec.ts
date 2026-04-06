@@ -14,9 +14,10 @@ test.describe("FitCamera on load", () => {
     // Reload — parts persist via localStorage, FitCamera runs on mount
     await page.reload();
     await page.waitForSelector(".app", { timeout: 10_000 });
-    await page.waitForFunction(() => !!(window as any).__controls?.target && !!(window as any).__camera, {
-      timeout: 10_000,
-    });
+    await page.waitForFunction(
+      () => !!(window as any).__cameraFitted && !!(window as any).__controls?.target && !!(window as any).__camera,
+      { timeout: 10_000 },
+    );
 
     const result = await page.evaluate(() => {
       const controls = (window as any).__controls;
