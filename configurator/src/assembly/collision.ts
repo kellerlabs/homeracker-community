@@ -62,7 +62,7 @@ export function detectCollidingPartIds(assembly: AssemblyState): Set<string> {
   return new Set(perPart.keys());
 }
 
-export { detectCollidingPartIds as detectCollidingPartIdsMesh } from "./mesh-collision";
+export { detectCollidingPartIds as detectCollidingPartIdsMesh, type CollisionResult, type CollisionVoxelData } from "./mesh-collision";
 
 /**
  * A cell is a valid pull-through overlap if it contains exactly one
