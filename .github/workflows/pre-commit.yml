@@ -19,6 +19,9 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
