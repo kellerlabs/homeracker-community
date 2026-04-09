@@ -1,5 +1,13 @@
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { OrbitControls, Grid, GizmoHelper, GizmoViewport, OrthographicCamera, PerspectiveCamera, useGLTF } from "@react-three/drei";
+import {
+  OrbitControls,
+  Grid,
+  GizmoHelper,
+  GizmoViewport,
+  OrthographicCamera,
+  PerspectiveCamera,
+  useGLTF,
+} from "@react-three/drei";
 import { useCallback, useRef, useState, useEffect, useMemo, Suspense, useLayoutEffect } from "react";
 import * as THREE from "three";
 import { BASE_UNIT, PART_COLORS, GRID_EXTENT } from "../constants";
@@ -94,9 +102,20 @@ type CameraSwitchSnapshot = {
 function OrthoIcon() {
   return (
     <svg viewBox="641.712 107.069 51.822 62.187" aria-hidden="true" focusable="false">
-      <path fill="currentColor" d="M 667.623 139.077 L 641.712 123.073 L 667.623 107.069 L 693.534 123.073 L 667.623 139.077 Z" />
-      <path fill="currentColor" d="M 667.623 169.256 L 667.623 139.077 L 693.534 123.073 L 693.534 153.252 L 667.623 169.256 Z" opacity="0.25" />
-      <path fill="currentColor" d="M 667.623 169.256 L 641.712 153.252 L 641.712 123.073 L 667.623 139.077 L 667.623 169.256 Z" opacity="0.5" />
+      <path
+        fill="currentColor"
+        d="M 667.623 139.077 L 641.712 123.073 L 667.623 107.069 L 693.534 123.073 L 667.623 139.077 Z"
+      />
+      <path
+        fill="currentColor"
+        d="M 667.623 169.256 L 667.623 139.077 L 693.534 123.073 L 693.534 153.252 L 667.623 169.256 Z"
+        opacity="0.25"
+      />
+      <path
+        fill="currentColor"
+        d="M 667.623 169.256 L 641.712 153.252 L 641.712 123.073 L 667.623 139.077 L 667.623 169.256 Z"
+        opacity="0.5"
+      />
     </svg>
   );
 }
@@ -104,9 +123,20 @@ function OrthoIcon() {
 function PerspIcon() {
   return (
     <svg viewBox="573.563 112.631 54.108 49.236" aria-hidden="true" focusable="false">
-      <path fill="currentColor" d="M 600.616 130.34 L 573.563 120.122 L 600.329 112.631 L 627.671 120.122 L 600.616 130.34 Z" />
-      <path fill="currentColor" d="M 600.688 161.817 L 600.616 130.308 L 627.671 119.984 L 627.671 151.494 L 600.688 161.817 Z" opacity="0.25" />
-      <path fill="currentColor" d="M 600.677 161.867 L 573.623 151.692 L 573.623 120.182 L 600.677 130.357 L 600.677 161.867 Z" opacity="0.5" />
+      <path
+        fill="currentColor"
+        d="M 600.616 130.34 L 573.563 120.122 L 600.329 112.631 L 627.671 120.122 L 600.616 130.34 Z"
+      />
+      <path
+        fill="currentColor"
+        d="M 600.688 161.817 L 600.616 130.308 L 627.671 119.984 L 627.671 151.494 L 600.688 161.817 Z"
+        opacity="0.25"
+      />
+      <path
+        fill="currentColor"
+        d="M 600.677 161.867 L 573.623 151.692 L 573.623 120.182 L 600.677 130.357 L 600.677 161.867 Z"
+        opacity="0.5"
+      />
     </svg>
   );
 }
@@ -999,9 +1029,7 @@ function ApplyCameraSwitchSnapshot({
 
     if (camera instanceof THREE.OrthographicCamera) {
       const fov = snapshot.fov ?? 50;
-      const frustumHeight =
-        snapshot.frustumHeight ??
-        (2 * Math.max(distance, 1) * Math.tan((fov * Math.PI) / 360));
+      const frustumHeight = snapshot.frustumHeight ?? 2 * Math.max(distance, 1) * Math.tan((fov * Math.PI) / 360);
       camera.top = frustumHeight / 2;
       camera.bottom = -frustumHeight / 2;
       camera.right = (frustumHeight * aspect) / 2;
@@ -1010,11 +1038,9 @@ function ApplyCameraSwitchSnapshot({
       camera.updateProjectionMatrix();
     } else if (camera instanceof THREE.PerspectiveCamera) {
       const frustumHeight = snapshot.frustumHeight;
-      const fov = snapshot.fov ?? (
-        frustumHeight
-          ? THREE.MathUtils.radToDeg(2 * Math.atan(frustumHeight / (2 * Math.max(distance, 1))))
-          : 50
-      );
+      const fov =
+        snapshot.fov ??
+        (frustumHeight ? THREE.MathUtils.radToDeg(2 * Math.atan(frustumHeight / (2 * Math.max(distance, 1)))) : 50);
       camera.fov = THREE.MathUtils.clamp(fov, 10, 120);
       camera.updateProjectionMatrix();
     }
@@ -1087,7 +1113,7 @@ function FitCamera({ parts }: { parts: PlacedPart[] }) {
       const frustumHeight = Math.max(
         (dy || BASE_UNIT) * padding,
         ((dx || BASE_UNIT) * padding) / aspect,
-        ((dz || BASE_UNIT) * padding) / aspect
+        ((dz || BASE_UNIT) * padding) / aspect,
       );
       camera.top = frustumHeight / 2;
       camera.bottom = -frustumHeight / 2;
@@ -1095,7 +1121,7 @@ function FitCamera({ parts }: { parts: PlacedPart[] }) {
       camera.left = -(frustumHeight * aspect) / 2;
     } else if (camera instanceof THREE.PerspectiveCamera) {
       const fov = camera.fov ?? 50;
-      const perspectiveDist = Math.max(radius / Math.tan((fov / 2) * Math.PI / 180), 100);
+      const perspectiveDist = Math.max(radius / Math.tan(((fov / 2) * Math.PI) / 180), 100);
       camera.position.set(cx + perspectiveDist * 0.6, cy + perspectiveDist * 0.7, cz + perspectiveDist * 0.6);
       camera.lookAt(cx, cy, cz);
     }
@@ -1781,10 +1807,7 @@ export function ViewportCanvas(props: ViewportProps) {
       data-placing={props.mode.type === "place" ? props.mode.definitionId : undefined}
       onPointerDown={handleViewportPointerDown}
     >
-      <Canvas
-        gl={{ antialias: true }}
-        scene={{ background: new THREE.Color("#3d3d5c") }}
-      >
+      <Canvas gl={{ antialias: true }} scene={{ background: new THREE.Color("#3d3d5c") }}>
         {isOrthographic ? (
           <OrthographicCamera makeDefault position={[150, 200, 150]} near={-20000} far={20000} zoom={1} />
         ) : (
@@ -1811,12 +1834,8 @@ export function ViewportCanvas(props: ViewportProps) {
         onClick={handleToggleCameraMode}
         title="Toggle perspective/orthographic camera"
       >
-        <span className="viewport-camera-toggle__thumb">
-          {isOrthographic ? <OrthoIcon /> : <PerspIcon />}
-        </span>
-        <span className="viewport-camera-toggle__label">
-          {isOrthographic ? "ORTHO" : "PERSP"}
-        </span>
+        <span className="viewport-camera-toggle__thumb">{isOrthographic ? <OrthoIcon /> : <PerspIcon />}</span>
+        <span className="viewport-camera-toggle__label">{isOrthographic ? "ORTHO" : "PERSP"}</span>
       </button>
       {boxSelectRect && (
         <div

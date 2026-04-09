@@ -31,11 +31,14 @@ test.describe("Camera views", () => {
   test("toggle switches to orthographic camera", async ({ appPage: page }) => {
     await page.click(".viewport-camera-toggle");
 
-    await page.waitForFunction(() => {
-      const camera = (window as any).__camera as any;
-      const label = document.querySelector(".viewport-camera-toggle")?.textContent ?? "";
-      return !!camera?.isOrthographicCamera && label.includes("ORTHO");
-    }, { timeout: 5_000 });
+    await page.waitForFunction(
+      () => {
+        const camera = (window as any).__camera as any;
+        const label = document.querySelector(".viewport-camera-toggle")?.textContent ?? "";
+        return !!camera?.isOrthographicCamera && label.includes("ORTHO");
+      },
+      { timeout: 5_000 },
+    );
 
     const result = await page.evaluate((key) => {
       const camera = (window as any).__camera as any;
@@ -56,11 +59,14 @@ test.describe("Camera views", () => {
     await page.reload();
     await waitForApp(page);
 
-    await page.waitForFunction(() => {
-      const camera = (window as any).__camera as any;
-      const label = document.querySelector(".viewport-camera-toggle")?.textContent ?? "";
-      return !!camera?.isOrthographicCamera && label.includes("ORTHO");
-    }, { timeout: 5_000 });
+    await page.waitForFunction(
+      () => {
+        const camera = (window as any).__camera as any;
+        const label = document.querySelector(".viewport-camera-toggle")?.textContent ?? "";
+        return !!camera?.isOrthographicCamera && label.includes("ORTHO");
+      },
+      { timeout: 5_000 },
+    );
 
     const persisted = await page.evaluate((key) => localStorage.getItem(key), CAMERA_MODE_STORAGE_KEY);
     expect(persisted).toBe("1");
@@ -71,11 +77,14 @@ test.describe("Camera views", () => {
     await page.waitForFunction(() => !!(window as any).__camera?.isOrthographicCamera, { timeout: 5_000 });
 
     await page.click(".viewport-camera-toggle");
-    await page.waitForFunction(() => {
-      const camera = (window as any).__camera as any;
-      const label = document.querySelector(".viewport-camera-toggle")?.textContent ?? "";
-      return !!camera?.isPerspectiveCamera && label.includes("PERSP");
-    }, { timeout: 5_000 });
+    await page.waitForFunction(
+      () => {
+        const camera = (window as any).__camera as any;
+        const label = document.querySelector(".viewport-camera-toggle")?.textContent ?? "";
+        return !!camera?.isPerspectiveCamera && label.includes("PERSP");
+      },
+      { timeout: 5_000 },
+    );
 
     const result = await page.evaluate((key) => {
       const camera = (window as any).__camera as any;

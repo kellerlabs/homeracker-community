@@ -35,7 +35,7 @@ const INVENTORY_STORAGE_KEY = "homeracker-inventory";
 // Restore custom parts (IndexedDB) THEN assembly (localStorage or URL hash).
 // Custom part definitions must exist before deserialize() resolves their IDs.
 const initPromise = restoreCustomParts()
-  .catch(() => { }) // IndexedDB may be unavailable
+  .catch(() => {}) // IndexedDB may be unavailable
   .then(async () => {
     // URL hash takes priority over localStorage
     if (location.hash.startsWith("#scene=")) {
@@ -593,7 +593,7 @@ export function App() {
         color: p.color,
       })),
     };
-    navigator.clipboard.writeText(JSON.stringify({ homeracker: "clipboard", ...clipboard })).catch(() => { });
+    navigator.clipboard.writeText(JSON.stringify({ homeracker: "clipboard", ...clipboard })).catch(() => {});
     setToast(`Copied ${parts.length} part(s)`);
     setTimeout(() => setToast(null), 2000);
   }, [selectedPartIds]);
