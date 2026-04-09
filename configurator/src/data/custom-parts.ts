@@ -37,7 +37,7 @@ function persistMeta() {
     id: d.id,
     name: d.name,
     gridCells: d.gridCells,
-    format: d.id.startsWith("custom-3mf-") ? "3mf" as const : "stl" as const,
+    format: d.id.startsWith("custom-3mf-") ? ("3mf" as const) : ("stl" as const),
   }));
   saveCustomPartsMeta(meta);
 }
@@ -96,9 +96,7 @@ export async function downloadCustomPart(defId: string): Promise<void> {
 
 /** Delete all custom parts whose IDs are not in the given set of used definition IDs */
 export async function deleteUnusedCustomParts(usedDefinitionIds: Set<string>): Promise<void> {
-  const toDelete = customDefinitions
-    .filter((d) => !usedDefinitionIds.has(d.id))
-    .map((d) => d.id);
+  const toDelete = customDefinitions.filter((d) => !usedDefinitionIds.has(d.id)).map((d) => d.id);
   for (const id of toDelete) {
     await deleteCustomPart(id);
   }
@@ -158,7 +156,11 @@ export async function deleteCustomPart(defId: string): Promise<void> {
   }
   notify();
   persistMeta();
-  try { await deleteSTLBuffer(defId); } catch { /* ignore */ }
+  try {
+    await deleteSTLBuffer(defId);
+  } catch {
+    /* ignore */
+  }
 }
 
 let nextId = 1;
@@ -232,7 +234,11 @@ type ModelFormat = "stl" | "3mf";
  */
 function parse3MFModelXml(xml: string): { objectId: string; name?: string; geometry: THREE.BufferGeometry }[] {
   const doc = new DOMParser().parseFromString(xml, "application/xml");
-  const results: { objectId: string; name?: string; geometry: THREE.BufferGeometry }[] = [];
+  const results: {
+    objectId: string;
+    name?: string;
+    geometry: THREE.BufferGeometry;
+  }[] = [];
 
   const objects = doc.querySelectorAll("object");
   for (const obj of objects) {
@@ -310,7 +316,10 @@ function parse3MF(buffer: ArrayBuffer): { geometry: THREE.BufferGeometry; name?:
 
   if (!rootModelPath || !zip[rootModelPath]) {
     // No rels — just return all mesh objects found
-    return [...allObjects.values()].map((o) => ({ geometry: o.geometry, name: o.name }));
+    return [...allObjects.values()].map((o) => ({
+      geometry: o.geometry,
+      name: o.name,
+    }));
   }
 
   const rootXml = decoder.decode(zip[rootModelPath]);
@@ -320,7 +329,10 @@ function parse3MF(buffer: ArrayBuffer): { geometry: THREE.BufferGeometry; name?:
   const buildItems = rootDoc.querySelectorAll("build > item");
   if (buildItems.length === 0) {
     // No build section — return all mesh objects
-    return [...allObjects.values()].map((o) => ({ geometry: o.geometry, name: o.name }));
+    return [...allObjects.values()].map((o) => ({
+      geometry: o.geometry,
+      name: o.name,
+    }));
   }
 
   const results: { geometry: THREE.BufferGeometry; name?: string }[] = [];
@@ -341,16 +353,19 @@ function parse3MF(buffer: ArrayBuffer): { geometry: THREE.BufferGeometry; name?:
     const directKey = `${rootModelPath}:${objectId}`;
     if (allObjects.has(directKey)) {
       const entry = allObjects.get(directKey)!;
-      results.push({ geometry: entry.geometry, name: rootObjName ?? entry.name });
+      results.push({
+        geometry: entry.geometry,
+        name: rootObjName ?? entry.name,
+      });
       continue;
     }
 
     // Composite with p:path references?
     const components = obj.querySelectorAll("components > component");
     for (const comp of components) {
-      const pPath = comp.getAttribute("p:path") ?? comp.getAttributeNS(
-        "http://schemas.microsoft.com/3dmanufacturing/production/2015/06", "path"
-      );
+      const pPath =
+        comp.getAttribute("p:path") ??
+        comp.getAttributeNS("http://schemas.microsoft.com/3dmanufacturing/production/2015/06", "path");
       const compObjectId = comp.getAttribute("objectid");
       if (!compObjectId) continue;
 
@@ -359,19 +374,30 @@ function parse3MF(buffer: ArrayBuffer): { geometry: THREE.BufferGeometry; name?:
         const resolvedPath = pPath.startsWith("/") ? pPath.substring(1) : pPath;
         const key = `${resolvedPath}:${compObjectId}`;
         const entry = allObjects.get(key);
-        if (entry) results.push({ geometry: entry.geometry, name: rootObjName ?? entry.name });
+        if (entry)
+          results.push({
+            geometry: entry.geometry,
+            name: rootObjName ?? entry.name,
+          });
       } else {
         // Same-model reference
         const key = `${rootModelPath}:${compObjectId}`;
         const entry = allObjects.get(key);
-        if (entry) results.push({ geometry: entry.geometry, name: rootObjName ?? entry.name });
+        if (entry)
+          results.push({
+            geometry: entry.geometry,
+            name: rootObjName ?? entry.name,
+          });
       }
     }
   }
 
   if (results.length === 0) {
     // Fallback: return all mesh objects found in any model file
-    return [...allObjects.values()].map((o) => ({ geometry: o.geometry, name: o.name }));
+    return [...allObjects.values()].map((o) => ({
+      geometry: o.geometry,
+      name: o.name,
+    }));
   }
 
   return results;
@@ -452,7 +478,9 @@ export function importModelFile(file: File): Promise<PartDefinition[]> {
             const objName = parts[i].name;
             const partLabel = objName
               ? `${baseName} - ${objName}`
-              : parts.length === 1 ? baseName : `${baseName} (${i + 1})`;
+              : parts.length === 1
+                ? baseName
+                : `${baseName} (${i + 1})`;
             const def = await registerCustomPart(partLabel, format, parts[i].geometry, buffer);
             defs.push(def);
           }
@@ -490,8 +518,7 @@ export async function restoreCustomParts(): Promise<void> {
     if (!buffer) continue; // Binary lost — skip this part
 
     try {
-      const format: ModelFormat =
-        entry.format ?? (entry.id.startsWith("custom-3mf-") ? "3mf" : "stl");
+      const format: ModelFormat = entry.format ?? (entry.id.startsWith("custom-3mf-") ? "3mf" : "stl");
       const geometry = parseStoredBuffer(buffer, format);
 
       // Re-voxelize from actual geometry (fixes stale bounding-box cells from old saves)

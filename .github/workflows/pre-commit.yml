@@ -22,6 +22,9 @@ jobs:
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
 
+      - name: Install Biome
+        run: bun install -g @biomejs/biome
+
       - name: Install system dependencies
         run: |
           sudo apt-get update

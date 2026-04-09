@@ -7,7 +7,9 @@ const PUBLIC_DIR = join(PROJECT_ROOT, "public");
 
 await Bun.build({
   entrypoints: [join(PROJECT_ROOT, "src", "main.tsx")],
-  outdir: DIST_DIR, naming: "[name].[ext]", sourcemap: "linked",
+  outdir: DIST_DIR,
+  naming: "[name].[ext]",
+  sourcemap: "linked",
   define: { "process.env.NODE_ENV": JSON.stringify("development") },
 });
 
@@ -19,7 +21,10 @@ const server = Bun.serve({
     if (pathname.startsWith("/src/")) {
       const mapped = pathname.replace("/src/", "").replace(".tsx", ".js").replace(".ts", ".js");
       const file = Bun.file(join(DIST_DIR, mapped));
-      if (await file.exists()) return new Response(file, { headers: { "Content-Type": "application/javascript" } });
+      if (await file.exists())
+        return new Response(file, {
+          headers: { "Content-Type": "application/javascript" },
+        });
     }
     if (pathname !== "/" && pathname !== "/index.html") {
       for (const dir of [PUBLIC_DIR, PROJECT_ROOT, DIST_DIR]) {
@@ -28,7 +33,9 @@ const server = Bun.serve({
       }
     }
     const html = await Bun.file(join(PROJECT_ROOT, "index.html")).text();
-    return new Response(html.replace('src="/src/main.tsx"', 'src="/src/main.js"'), { headers: { "Content-Type": "text/html" } });
+    return new Response(html.replace('src="/src/main.tsx"', 'src="/src/main.js"'), {
+      headers: { "Content-Type": "text/html" },
+    });
   },
 });
 
@@ -38,11 +45,14 @@ const browser = await puppeteer.launch({
 });
 const page = await browser.newPage();
 await page.setViewport({ width: 1280, height: 800 });
-await page.goto("http://localhost:" + server.port, { waitUntil: "networkidle0", timeout: 15000 });
-await new Promise(r => setTimeout(r, 2000));
+await page.goto("http://localhost:" + server.port, {
+  waitUntil: "networkidle0",
+  timeout: 15000,
+});
+await new Promise((r) => setTimeout(r, 2000));
 
 await page.evaluate(() => (window as any).__assembly.addPart("support-3u", [0, 0, 0]));
-await new Promise(r => setTimeout(r, 2000));
+await new Promise((r) => setTimeout(r, 2000));
 
 const debug = await page.evaluate(() => {
   const scene = (window as any).__scene;

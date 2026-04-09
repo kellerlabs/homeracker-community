@@ -43,3 +43,9 @@ repos:
         language: script
         files: ^models/.*\.scad$
         pass_filenames: false
+      - id: biome-format
+        name: Biome format check
+        entry: bash -c 'cd configurator && bun run format'
+        language: system
+        files: ^configurator/.*\.(ts|tsx)$
+        pass_filenames: false

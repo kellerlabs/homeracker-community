@@ -1,14 +1,37 @@
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { OrbitControls, Grid, GizmoHelper, GizmoViewport, OrthographicCamera, PerspectiveCamera, useGLTF } from "@react-three/drei";
+import {
+  OrbitControls,
+  Grid,
+  GizmoHelper,
+  GizmoViewport,
+  OrthographicCamera,
+  PerspectiveCamera,
+  useGLTF,
+} from "@react-three/drei";
 import { useCallback, useRef, useState, useEffect, useMemo, Suspense, useLayoutEffect } from "react";
 import * as THREE from "three";
 import { BASE_UNIT, PART_COLORS, GRID_EXTENT } from "../constants";
-import type { PlacedPart, InteractionMode, GridPosition, Rotation3, RotationStep, Axis, DragState, ClipboardData } from "../types";
+import type {
+  PlacedPart,
+  InteractionMode,
+  GridPosition,
+  Rotation3,
+  RotationStep,
+  Axis,
+  DragState,
+  ClipboardData,
+} from "../types";
 import { getPartDefinition } from "../data/catalog";
 import { isCustomPart, getCustomPartGeometry } from "../data/custom-parts";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { AssemblyState } from "../assembly/AssemblyState";
-import { nextOrientation, orientationToRotation, transformCell, rotateGridCells, computeGroundLift } from "../assembly/grid-utils";
+import {
+  nextOrientation,
+  orientationToRotation,
+  transformCell,
+  rotateGridCells,
+  computeGroundLift,
+} from "../assembly/grid-utils";
 import { findBestSnap, findBestConnectorSnap, type GridRay } from "../assembly/snap";
 import { detectCollidingPartIds, detectCollidingPartIdsMesh } from "../assembly/collision";
 import { registerPartGeometry, hasRegisteredGeometry } from "../assembly/geometry-registry";
@@ -20,11 +43,16 @@ import { registerPartGeometry, hasRegisteredGeometry } from "../assembly/geometr
 function makeColorMaterial(
   color: string,
   original?: THREE.Material | null,
-  overrides?: { transparent?: boolean; opacity?: number; emissive?: THREE.Color; emissiveIntensity?: number },
+  overrides?: {
+    transparent?: boolean;
+    opacity?: number;
+    emissive?: THREE.Color;
+    emissiveIntensity?: number;
+  },
 ): THREE.MeshStandardMaterial {
   const src = original instanceof THREE.MeshStandardMaterial ? original : null;
   return new THREE.MeshStandardMaterial({
-    ...src as THREE.MeshStandardMaterialParameters,
+    ...(src as THREE.MeshStandardMaterialParameters),
     color: new THREE.Color(color),
     vertexColors: false,
     ...overrides,
@@ -36,7 +64,12 @@ interface ViewportProps {
   mode: InteractionMode;
   selectedPartIds: Set<string>;
   assembly: AssemblyState;
-  onPlacePart: (definitionId: string, position: GridPosition, rotation: PlacedPart["rotation"], orientation?: Axis) => void;
+  onPlacePart: (
+    definitionId: string,
+    position: GridPosition,
+    rotation: PlacedPart["rotation"],
+    orientation?: Axis,
+  ) => void;
   onMovePart: (instanceId: string, newPosition: GridPosition, rotation?: Rotation3, orientation?: Axis) => void;
   onMoveSelectedParts: (primaryId: string, newPosition: GridPosition, rotation?: Rotation3, orientation?: Axis) => void;
   onClickPart: (instanceId: string, shiftKey: boolean) => void;
@@ -69,9 +102,20 @@ type CameraSwitchSnapshot = {
 function OrthoIcon() {
   return (
     <svg viewBox="641.712 107.069 51.822 62.187" aria-hidden="true" focusable="false">
-      <path fill="currentColor" d="M 667.623 139.077 L 641.712 123.073 L 667.623 107.069 L 693.534 123.073 L 667.623 139.077 Z" />
-      <path fill="currentColor" d="M 667.623 169.256 L 667.623 139.077 L 693.534 123.073 L 693.534 153.252 L 667.623 169.256 Z" opacity="0.25" />
-      <path fill="currentColor" d="M 667.623 169.256 L 641.712 153.252 L 641.712 123.073 L 667.623 139.077 L 667.623 169.256 Z" opacity="0.5" />
+      <path
+        fill="currentColor"
+        d="M 667.623 139.077 L 641.712 123.073 L 667.623 107.069 L 693.534 123.073 L 667.623 139.077 Z"
+      />
+      <path
+        fill="currentColor"
+        d="M 667.623 169.256 L 667.623 139.077 L 693.534 123.073 L 693.534 153.252 L 667.623 169.256 Z"
+        opacity="0.25"
+      />
+      <path
+        fill="currentColor"
+        d="M 667.623 169.256 L 641.712 153.252 L 641.712 123.073 L 667.623 139.077 L 667.623 169.256 Z"
+        opacity="0.5"
+      />
     </svg>
   );
 }
@@ -79,9 +123,20 @@ function OrthoIcon() {
 function PerspIcon() {
   return (
     <svg viewBox="573.563 112.631 54.108 49.236" aria-hidden="true" focusable="false">
-      <path fill="currentColor" d="M 600.616 130.34 L 573.563 120.122 L 600.329 112.631 L 627.671 120.122 L 600.616 130.34 Z" />
-      <path fill="currentColor" d="M 600.688 161.817 L 600.616 130.308 L 627.671 119.984 L 627.671 151.494 L 600.688 161.817 Z" opacity="0.25" />
-      <path fill="currentColor" d="M 600.677 161.867 L 573.623 151.692 L 573.623 120.182 L 600.677 130.357 L 600.677 161.867 Z" opacity="0.5" />
+      <path
+        fill="currentColor"
+        d="M 600.616 130.34 L 573.563 120.122 L 600.329 112.631 L 627.671 120.122 L 600.616 130.34 Z"
+      />
+      <path
+        fill="currentColor"
+        d="M 600.688 161.817 L 600.616 130.308 L 627.671 119.984 L 627.671 151.494 L 600.688 161.817 Z"
+        opacity="0.25"
+      />
+      <path
+        fill="currentColor"
+        d="M 600.677 161.867 L 573.623 151.692 L 573.623 120.182 L 600.677 130.357 L 600.677 161.867 Z"
+        opacity="0.5"
+      />
     </svg>
   );
 }
@@ -121,11 +176,7 @@ function modelCenterOffset(def: { gridCells: GridPosition[] }, orientation: Axis
   const maxX = Math.max(...cells.map((c) => c[0]));
   const maxY = Math.max(...cells.map((c) => c[1]));
   const maxZ = Math.max(...cells.map((c) => c[2]));
-  return [
-    ((minX + maxX) / 2) * BASE_UNIT,
-    ((minY + maxY) / 2) * BASE_UNIT,
-    ((minZ + maxZ) / 2) * BASE_UNIT,
-  ];
+  return [((minX + maxX) / 2) * BASE_UNIT, ((minY + maxY) / 2) * BASE_UNIT, ((minZ + maxZ) / 2) * BASE_UNIT];
 }
 
 /** A placed part rendered with its actual GLB model (or custom STL geometry) */
@@ -150,12 +201,30 @@ function PartMesh({
   if (!def) return null;
 
   if (isCustomPart(part.definitionId)) {
-    return <CustomPartMesh part={part} isSelected={isSelected} isDragging={isDragging} isPlacing={isPlacing} isFlashing={isFlashing} isColliding={isColliding} onPointerDown={onPointerDown} />;
+    return (
+      <CustomPartMesh
+        part={part}
+        isSelected={isSelected}
+        isDragging={isDragging}
+        isPlacing={isPlacing}
+        isFlashing={isFlashing}
+        isColliding={isColliding}
+        onPointerDown={onPointerDown}
+      />
+    );
   }
 
   return (
-    <Suspense fallback={<PartMeshFallback part={part} isSelected={isSelected} onClick={() => { }} />}>
-      <PartMeshLoaded part={part} isSelected={isSelected} isDragging={isDragging} isPlacing={isPlacing} isFlashing={isFlashing} isColliding={isColliding} onPointerDown={onPointerDown} />
+    <Suspense fallback={<PartMeshFallback part={part} isSelected={isSelected} onClick={() => {}} />}>
+      <PartMeshLoaded
+        part={part}
+        isSelected={isSelected}
+        isDragging={isDragging}
+        isPlacing={isPlacing}
+        isFlashing={isFlashing}
+        isColliding={isColliding}
+        onPointerDown={onPointerDown}
+      />
     </Suspense>
   );
 }
@@ -217,12 +286,21 @@ function CustomPartMesh({
         if (!isPlacing) e.stopPropagation();
         onPointerDown(e);
       }}
-      onClick={(e) => { if (!isPlacing) e.stopPropagation(); }}
+      onClick={(e) => {
+        if (!isPlacing) e.stopPropagation();
+      }}
     >
       <group position={offset}>
         <group rotation={partEuler}>
           <mesh geometry={geometry}>
-            <meshStandardMaterial ref={flashRef} color={color} roughness={1} metalness={0} transparent={isDragging} opacity={opacity} />
+            <meshStandardMaterial
+              ref={flashRef}
+              color={color}
+              roughness={1}
+              metalness={0}
+              transparent={isDragging}
+              opacity={opacity}
+            />
           </mesh>
         </group>
       </group>
@@ -290,7 +368,10 @@ function PartMeshLoaded({
         const orig = originalMaterials.current.get(child) ?? child.material;
         if (isDragging) {
           if (part.color) {
-            child.material = makeColorMaterial(part.color, orig, { transparent: true, opacity: 0.3 });
+            child.material = makeColorMaterial(part.color, orig, {
+              transparent: true,
+              opacity: 0.3,
+            });
           } else {
             const mat = orig.clone();
             mat.transparent = true;
@@ -378,27 +459,21 @@ function PartMeshLoaded({
         if (!isPlacing) e.stopPropagation();
         onPointerDown(e);
       }}
-      onClick={(e) => { if (!isPlacing) e.stopPropagation(); }}
+      onClick={(e) => {
+        if (!isPlacing) e.stopPropagation();
+      }}
     >
       <group position={offset}>
         <group rotation={partEuler}>
           <group rotation={orientEuler}>
-            <primitive
-              ref={groupRef}
-              object={cloned}
-            />
+            <primitive ref={groupRef} object={cloned} />
           </group>
         </group>
       </group>
       {isSelected && !isDragging && (
         <mesh position={offset}>
           <boxGeometry args={[BASE_UNIT * 1.1, BASE_UNIT * 1.1, BASE_UNIT * 1.1]} />
-          <meshBasicMaterial
-            color={PART_COLORS.selected}
-            wireframe
-            transparent
-            opacity={0.3}
-          />
+          <meshBasicMaterial color={PART_COLORS.selected} wireframe transparent opacity={0.3} />
         </mesh>
       )}
     </group>
@@ -419,9 +494,7 @@ function PartMeshFallback({
   if (!def) return null;
 
   const worldPos = gridToWorld(part.position);
-  const color = isSelected
-    ? PART_COLORS.selected
-    : (part.color || PART_COLORS[def.category] || "#888888");
+  const color = isSelected ? PART_COLORS.selected : part.color || PART_COLORS[def.category] || "#888888";
 
   // Use oriented + rotated cells for correct sizing and offset
   const orient = part.orientation ?? "y";
@@ -459,11 +532,7 @@ function PartMeshFallback({
 
 /** Convert a Rotation3 (degrees) to a radians Euler tuple for Three.js */
 function degreesToEuler(rot: Rotation3): [number, number, number] {
-  return [
-    (rot[0] * Math.PI) / 180,
-    (rot[1] * Math.PI) / 180,
-    (rot[2] * Math.PI) / 180,
-  ];
+  return [(rot[0] * Math.PI) / 180, (rot[1] * Math.PI) / 180, (rot[2] * Math.PI) / 180];
 }
 
 /** Cycle a single rotation step: 0 -> 90 -> 180 -> 270 -> 0 */
@@ -488,7 +557,9 @@ function GhostModel({
     return <CustomGhostModel definitionId={definitionId} rotation={rotation} isSnapped={isSnapped} />;
   }
 
-  return <GLBGhostModel definitionId={definitionId} rotation={rotation} orientation={orientation} isSnapped={isSnapped} />;
+  return (
+    <GLBGhostModel definitionId={definitionId} rotation={rotation} orientation={orientation} isSnapped={isSnapped} />
+  );
 }
 
 /** Ghost preview for GLB-based parts */
@@ -535,10 +606,7 @@ function GLBGhostModel({
     <group position={offset}>
       <group rotation={euler}>
         <group rotation={orientEuler}>
-          <primitive
-            ref={groupRef}
-            object={cloned}
-          />
+          <primitive ref={groupRef} object={cloned} />
         </group>
       </group>
     </group>
@@ -601,12 +669,7 @@ function GhostFallback({ definitionId, orientation }: { definitionId: string; or
   return (
     <mesh position={offset}>
       <boxGeometry args={[sizeX * 0.95, sizeY * 0.95, sizeZ * 0.95]} />
-      <meshStandardMaterial
-        color={PART_COLORS.ghost_valid}
-        transparent
-        opacity={0.4}
-        depthWrite={false}
-      />
+      <meshStandardMaterial color={PART_COLORS.ghost_valid} transparent opacity={0.4} depthWrite={false} />
     </mesh>
   );
 }
@@ -655,7 +718,12 @@ function useGhostSnap({
   planeY?: number;
   initialPosition?: GridPosition;
   grabOffsetRef?: React.MutableRefObject<[number, number] | null>;
-  syncRef?: React.MutableRefObject<{ position: GridPosition; orientation: Axis; rotation: Rotation3; isSnapped: boolean }>;
+  syncRef?: React.MutableRefObject<{
+    position: GridPosition;
+    orientation: Axis;
+    rotation: Rotation3;
+    isSnapped: boolean;
+  }>;
 }) {
   const { camera, raycaster, pointer } = useThree();
   const [gridPos, setGridPos] = useState<GridPosition>(initialPosition ?? [0, 0, 0]);
@@ -679,10 +747,7 @@ function useGhostSnap({
     if (grabOffsetRef) {
       if (grabOffsetRef.current === null && initialPosition) {
         const partWorldPos = gridToWorld(initialPosition);
-        grabOffsetRef.current = [
-          intersectPoint.x - partWorldPos[0],
-          intersectPoint.z - partWorldPos[2],
-        ];
+        grabOffsetRef.current = [intersectPoint.x - partWorldPos[0], intersectPoint.z - partWorldPos[2]];
       }
       if (grabOffsetRef.current) {
         intersectPoint.x -= grabOffsetRef.current[0];
@@ -699,11 +764,7 @@ function useGhostSnap({
         raycaster.ray.origin.y / BASE_UNIT,
         raycaster.ray.origin.z / BASE_UNIT,
       ],
-      direction: [
-        raycaster.ray.direction.x,
-        raycaster.ray.direction.y,
-        raycaster.ray.direction.z,
-      ],
+      direction: [raycaster.ray.direction.x, raycaster.ray.direction.y, raycaster.ray.direction.z],
     };
 
     // Snap position is the anchor part's absolute position (cursor + offset)
@@ -711,9 +772,9 @@ function useGhostSnap({
 
     // Try snapping: supports snap to connector sockets, connectors snap to support endpoints
     const snap = snapEnabled
-      ? (isSupport
+      ? isSupport
         ? findBestSnap(assembly, definitionId, snapPos, 3, gridRay)
-        : findBestConnectorSnap(assembly, definitionId, snapPos, 3, gridRay, ghostRotation))
+        : findBestConnectorSnap(assembly, definitionId, snapPos, 3, gridRay, ghostRotation)
       : null;
 
     if (snap) {
@@ -736,7 +797,13 @@ function useGhostSnap({
       setEffectiveOrientation(orient);
       setEffectiveRotation(snapRotation);
       setIsSnapped(true);
-      if (syncRef) syncRef.current = { position: resultPos, orientation: orient, rotation: snapRotation, isSnapped: true };
+      if (syncRef)
+        syncRef.current = {
+          position: resultPos,
+          orientation: orient,
+          rotation: snapRotation,
+          isSnapped: true,
+        };
       return;
     }
 
@@ -749,7 +816,13 @@ function useGhostSnap({
     setEffectiveRotation(ghostRotation);
     setGridPos(cursorGrid);
     setIsSnapped(false);
-    if (syncRef) syncRef.current = { position: cursorGrid, orientation: orient, rotation: ghostRotation, isSnapped: false };
+    if (syncRef)
+      syncRef.current = {
+        position: cursorGrid,
+        orientation: orient,
+        rotation: ghostRotation,
+        isSnapped: false,
+      };
   });
 
   return { gridPos, effectiveOrientation, effectiveRotation, isSnapped, def };
@@ -776,7 +849,12 @@ function GhostPreview({
   onPlacePart: (definitionId: string, position: GridPosition, rotation: Rotation3, orientation: Axis) => void;
 }) {
   const { gridPos, effectiveOrientation, effectiveRotation, isSnapped, def } = useGhostSnap({
-    definitionId, assembly, ghostOrientation, ghostRotation, yLift, snapEnabled,
+    definitionId,
+    assembly,
+    ghostOrientation,
+    ghostRotation,
+    yLift,
+    snapEnabled,
     syncRef: ghostStateRef,
   });
 
@@ -803,7 +881,12 @@ function GhostPreview({
   return (
     <group name="ghost-preview" position={worldPos} onClick={handleGhostClick}>
       <Suspense fallback={<GhostFallback definitionId={definitionId} orientation={effectiveOrientation} />}>
-        <GhostModel definitionId={definitionId} rotation={effectiveRotation} orientation={effectiveOrientation} isSnapped={isSnapped} />
+        <GhostModel
+          definitionId={definitionId}
+          rotation={effectiveRotation}
+          orientation={effectiveOrientation}
+          isSnapped={isSnapped}
+        />
       </Suspense>
     </group>
   );
@@ -821,7 +904,11 @@ function DragPreview({
 }: {
   dragState: DragState;
   assembly: AssemblyState;
-  dropTargetRef: React.MutableRefObject<{ position: GridPosition; orientation?: Axis; rotation?: Rotation3 }>;
+  dropTargetRef: React.MutableRefObject<{
+    position: GridPosition;
+    orientation?: Axis;
+    rotation?: Rotation3;
+  }>;
   yLift: number;
   snapEnabled: boolean;
   selectedPartIds: Set<string>;
@@ -844,7 +931,11 @@ function DragPreview({
 
   // Keep dropTargetRef in sync
   useEffect(() => {
-    dropTargetRef.current = { position: gridPos, orientation: effectiveOrientation, rotation: dragState.rotation };
+    dropTargetRef.current = {
+      position: gridPos,
+      orientation: effectiveOrientation,
+      rotation: dragState.rotation,
+    };
   }, [gridPos, effectiveOrientation, dragState.rotation]);
 
   if (!def) return null;
@@ -863,20 +954,37 @@ function DragPreview({
     <group>
       <group name="drag-preview" position={worldPos}>
         <Suspense fallback={<GhostFallback definitionId={dragState.definitionId} orientation={effectiveOrientation} />}>
-          <GhostModel definitionId={dragState.definitionId} rotation={dragState.rotation} orientation={effectiveOrientation} isSnapped={isSnapped} />
+          <GhostModel
+            definitionId={dragState.definitionId}
+            rotation={dragState.rotation}
+            orientation={effectiveOrientation}
+            isSnapped={isSnapped}
+          />
         </Suspense>
       </group>
-      {isMultiDrag && parts.filter((p) => selectedPartIds.has(p.instanceId) && p.instanceId !== dragState.instanceId).map((p) => {
-        const offsetPos: GridPosition = [p.position[0] + delta[0], p.position[1] + delta[1], p.position[2] + delta[2]];
-        const wp = gridToWorld(offsetPos);
-        return (
-          <group key={p.instanceId} name={`drag-preview-${p.instanceId}`} position={wp}>
-            <Suspense fallback={<GhostFallback definitionId={p.definitionId} orientation={p.orientation ?? "y"} />}>
-              <GhostModel definitionId={p.definitionId} rotation={p.rotation} orientation={p.orientation ?? "y"} isSnapped={isSnapped} />
-            </Suspense>
-          </group>
-        );
-      })}
+      {isMultiDrag &&
+        parts
+          .filter((p) => selectedPartIds.has(p.instanceId) && p.instanceId !== dragState.instanceId)
+          .map((p) => {
+            const offsetPos: GridPosition = [
+              p.position[0] + delta[0],
+              p.position[1] + delta[1],
+              p.position[2] + delta[2],
+            ];
+            const wp = gridToWorld(offsetPos);
+            return (
+              <group key={p.instanceId} name={`drag-preview-${p.instanceId}`} position={wp}>
+                <Suspense fallback={<GhostFallback definitionId={p.definitionId} orientation={p.orientation ?? "y"} />}>
+                  <GhostModel
+                    definitionId={p.definitionId}
+                    rotation={p.rotation}
+                    orientation={p.orientation ?? "y"}
+                    isSnapped={isSnapped}
+                  />
+                </Suspense>
+              </group>
+            );
+          })}
     </group>
   );
 }
@@ -921,9 +1029,7 @@ function ApplyCameraSwitchSnapshot({
 
     if (camera instanceof THREE.OrthographicCamera) {
       const fov = snapshot.fov ?? 50;
-      const frustumHeight =
-        snapshot.frustumHeight ??
-        (2 * Math.max(distance, 1) * Math.tan((fov * Math.PI) / 360));
+      const frustumHeight = snapshot.frustumHeight ?? 2 * Math.max(distance, 1) * Math.tan((fov * Math.PI) / 360);
       camera.top = frustumHeight / 2;
       camera.bottom = -frustumHeight / 2;
       camera.right = (frustumHeight * aspect) / 2;
@@ -932,11 +1038,9 @@ function ApplyCameraSwitchSnapshot({
       camera.updateProjectionMatrix();
     } else if (camera instanceof THREE.PerspectiveCamera) {
       const frustumHeight = snapshot.frustumHeight;
-      const fov = snapshot.fov ?? (
-        frustumHeight
-          ? THREE.MathUtils.radToDeg(2 * Math.atan(frustumHeight / (2 * Math.max(distance, 1))))
-          : 50
-      );
+      const fov =
+        snapshot.fov ??
+        (frustumHeight ? THREE.MathUtils.radToDeg(2 * Math.atan(frustumHeight / (2 * Math.max(distance, 1)))) : 50);
       camera.fov = THREE.MathUtils.clamp(fov, 10, 120);
       camera.updateProjectionMatrix();
     }
@@ -962,8 +1066,12 @@ function FitCamera({ parts }: { parts: PlacedPart[] }) {
     if (!orbitControls?.target) return;
 
     // Compute bounding box of all part world positions
-    let minX = Infinity, minY = Infinity, minZ = Infinity;
-    let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+    let minX = Infinity,
+      minY = Infinity,
+      minZ = Infinity;
+    let maxX = -Infinity,
+      maxY = -Infinity,
+      maxZ = -Infinity;
     for (const part of parts) {
       const def = getPartDefinition(part.definitionId);
       if (!def) continue;
@@ -974,9 +1082,12 @@ function FitCamera({ parts }: { parts: PlacedPart[] }) {
         const wx = (part.position[0] + cell[0]) * BASE_UNIT;
         const wy = (part.position[1] + cell[1]) * BASE_UNIT + BASE_UNIT / 2;
         const wz = (part.position[2] + cell[2]) * BASE_UNIT;
-        minX = Math.min(minX, wx); maxX = Math.max(maxX, wx + BASE_UNIT);
-        minY = Math.min(minY, wy); maxY = Math.max(maxY, wy + BASE_UNIT);
-        minZ = Math.min(minZ, wz); maxZ = Math.max(maxZ, wz + BASE_UNIT);
+        minX = Math.min(minX, wx);
+        maxX = Math.max(maxX, wx + BASE_UNIT);
+        minY = Math.min(minY, wy);
+        maxY = Math.max(maxY, wy + BASE_UNIT);
+        minZ = Math.min(minZ, wz);
+        maxZ = Math.max(maxZ, wz + BASE_UNIT);
       }
     }
     if (!Number.isFinite(minX) || !Number.isFinite(maxX)) return;
@@ -1002,7 +1113,7 @@ function FitCamera({ parts }: { parts: PlacedPart[] }) {
       const frustumHeight = Math.max(
         (dy || BASE_UNIT) * padding,
         ((dx || BASE_UNIT) * padding) / aspect,
-        ((dz || BASE_UNIT) * padding) / aspect
+        ((dz || BASE_UNIT) * padding) / aspect,
       );
       camera.top = frustumHeight / 2;
       camera.bottom = -frustumHeight / 2;
@@ -1010,7 +1121,7 @@ function FitCamera({ parts }: { parts: PlacedPart[] }) {
       camera.left = -(frustumHeight * aspect) / 2;
     } else if (camera instanceof THREE.PerspectiveCamera) {
       const fov = camera.fov ?? 50;
-      const perspectiveDist = Math.max(radius / Math.tan((fov / 2) * Math.PI / 180), 100);
+      const perspectiveDist = Math.max(radius / Math.tan(((fov / 2) * Math.PI) / 180), 100);
       camera.position.set(cx + perspectiveDist * 0.6, cy + perspectiveDist * 0.7, cz + perspectiveDist * 0.6);
       camera.lookAt(cx, cy, cz);
     }
@@ -1075,17 +1186,18 @@ function PasteGhostPreview({
   return (
     <group name="paste-preview" onClick={handlePasteClick}>
       {clipboard.parts.map((cp, i) => {
-        const pos: GridPosition = [
-          gridPos[0] + cp.offset[0],
-          gridPos[1] + cp.offset[1],
-          gridPos[2] + cp.offset[2],
-        ];
+        const pos: GridPosition = [gridPos[0] + cp.offset[0], gridPos[1] + cp.offset[1], gridPos[2] + cp.offset[2]];
         const worldPos = gridToWorld(pos);
         const rot = addRotations(cp.rotation, ghostRotation);
         return (
           <group key={i} position={worldPos}>
             <Suspense fallback={<GhostFallback definitionId={cp.definitionId} orientation={cp.orientation} />}>
-              <GhostModel definitionId={cp.definitionId} rotation={rot} orientation={cp.orientation} isSnapped={isSnapped} />
+              <GhostModel
+                definitionId={cp.definitionId}
+                rotation={rot}
+                orientation={cp.orientation}
+                isSnapped={isSnapped}
+              />
             </Suspense>
           </group>
         );
@@ -1100,7 +1212,11 @@ interface SceneProps extends ViewportProps {
   ghostStateRef: React.MutableRefObject<GhostState>;
   pasteStateRef: React.MutableRefObject<PasteGhostState>;
   dragState: DragState | null;
-  dropTargetRef: React.MutableRefObject<{ position: GridPosition; orientation?: Axis; rotation?: Rotation3 }>;
+  dropTargetRef: React.MutableRefObject<{
+    position: GridPosition;
+    orientation?: Axis;
+    rotation?: Rotation3;
+  }>;
   onPartPointerDown: (instanceId: string, nativeEvent: PointerEvent) => void;
   yLift: number;
   boxSelectActive: boolean;
@@ -1149,7 +1265,7 @@ function Scene({
         onClickEmpty();
       }
     },
-    [mode, onPlacePart, onPasteParts, onClickEmpty, ghostStateRef, pasteStateRef, dragState, ghostRotation]
+    [mode, onPlacePart, onPasteParts, onClickEmpty, ghostStateRef, pasteStateRef, dragState, ghostRotation],
   );
 
   return (
@@ -1284,7 +1400,11 @@ export function ViewportCanvas(props: ViewportProps) {
 
   // Drag state
   const [dragState, setDragState] = useState<DragState | null>(null);
-  const dropTargetRef = useRef<{ position: GridPosition; orientation?: Axis; rotation?: Rotation3 }>({
+  const dropTargetRef = useRef<{
+    position: GridPosition;
+    orientation?: Axis;
+    rotation?: Rotation3;
+  }>({
     position: [0, 0, 0],
   });
   const pendingDragRef = useRef<{
@@ -1325,7 +1445,10 @@ export function ViewportCanvas(props: ViewportProps) {
   // Box-select (marquee) state
   const boxSelectRef = useRef<{ startX: number; startY: number } | null>(null);
   const [boxSelectRect, setBoxSelectRect] = useState<{
-    x1: number; y1: number; x2: number; y2: number;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
   } | null>(null);
 
   // Determine if we're placing a support (orientation cycling) vs connector (rotation)
@@ -1401,7 +1524,7 @@ export function ViewportCanvas(props: ViewportProps) {
         startY: nativeEvent.clientY,
       };
     },
-    [props.mode]
+    [props.mode],
   );
 
   // Window-level pointer move/up for drag detection and box-select
@@ -1529,10 +1652,7 @@ export function ViewportCanvas(props: ViewportProps) {
           return;
         }
         props.onEscape();
-      } else if (
-        (e.key === "Delete" || e.key === "Backspace") &&
-        props.selectedPartIds.size > 0
-      ) {
+      } else if ((e.key === "Delete" || e.key === "Backspace") && props.selectedPartIds.size > 0) {
         props.onDeleteSelected();
       } else if (dragState) {
         const rotateDrag = (axis: 0 | 1 | 2) => {
@@ -1541,9 +1661,15 @@ export function ViewportCanvas(props: ViewportProps) {
           setDragState({ ...dragState, rotation: next });
         };
         switch (e.key.toLowerCase()) {
-          case "r": rotateDrag(1); break;
-          case "f": rotateDrag(2); break;
-          case "t": rotateDrag(0); break;
+          case "r":
+            rotateDrag(1);
+            break;
+          case "f":
+            rotateDrag(2);
+            break;
+          case "t":
+            rotateDrag(0);
+            break;
           case "o": {
             const def = getPartDefinition(dragState.definitionId);
             if (def?.category === "support") {
@@ -1552,42 +1678,97 @@ export function ViewportCanvas(props: ViewportProps) {
             }
             break;
           }
-          case "w": setYLift((prev) => prev + 1); break;
-          case "s": setYLift((prev) => Math.max(0, prev - 1)); break;
+          case "w":
+            setYLift((prev) => prev + 1);
+            break;
+          case "s":
+            setYLift((prev) => Math.max(0, prev - 1));
+            break;
         }
       } else if (props.mode.type === "select" && props.selectedPartIds.size > 0) {
         // Arrow key nudge, W/S lift, and R/T/F/O rotation for selected parts
         const fine = e.shiftKey ? 0.05 : 1;
         switch (e.key) {
-          case "ArrowLeft": e.preventDefault(); props.onNudgeParts(-fine, 0, 0); break;
-          case "ArrowRight": e.preventDefault(); props.onNudgeParts(fine, 0, 0); break;
-          case "ArrowUp": e.preventDefault(); props.onNudgeParts(0, 0, -fine); break;
-          case "ArrowDown": e.preventDefault(); props.onNudgeParts(0, 0, fine); break;
-          case "w": case "W": props.onNudgeParts(0, fine, 0); break;
-          case "s": case "S": props.onNudgeParts(0, -fine, 0); break;
-          case "r": case "R": props.onRotateSelectedParts(1); break;
-          case "t": case "T": props.onRotateSelectedParts(0); break;
-          case "f": case "F": props.onRotateSelectedParts(2); break;
-          case "o": case "O": props.onOrientSelectedParts(); break;
+          case "ArrowLeft":
+            e.preventDefault();
+            props.onNudgeParts(-fine, 0, 0);
+            break;
+          case "ArrowRight":
+            e.preventDefault();
+            props.onNudgeParts(fine, 0, 0);
+            break;
+          case "ArrowUp":
+            e.preventDefault();
+            props.onNudgeParts(0, 0, -fine);
+            break;
+          case "ArrowDown":
+            e.preventDefault();
+            props.onNudgeParts(0, 0, fine);
+            break;
+          case "w":
+          case "W":
+            props.onNudgeParts(0, fine, 0);
+            break;
+          case "s":
+          case "S":
+            props.onNudgeParts(0, -fine, 0);
+            break;
+          case "r":
+          case "R":
+            props.onRotateSelectedParts(1);
+            break;
+          case "t":
+          case "T":
+            props.onRotateSelectedParts(0);
+            break;
+          case "f":
+          case "F":
+            props.onRotateSelectedParts(2);
+            break;
+          case "o":
+          case "O":
+            props.onOrientSelectedParts();
+            break;
         }
       } else if (props.mode.type === "place" || props.mode.type === "paste") {
         switch (e.key.toLowerCase()) {
-          case "r": rotateAxis(1); break;
-          case "f": rotateAxis(2); break;
-          case "t": rotateAxis(0); break;
+          case "r":
+            rotateAxis(1);
+            break;
+          case "f":
+            rotateAxis(2);
+            break;
+          case "t":
+            rotateAxis(0);
+            break;
           case "o":
             if (isPlacingSupport) {
               setGhostOrientation((prev) => nextOrientation(prev));
             }
             break;
-          case "w": setYLift((prev) => prev + 1); break;
-          case "s": setYLift((prev) => Math.max(0, prev - 1)); break;
+          case "w":
+            setYLift((prev) => prev + 1);
+            break;
+          case "s":
+            setYLift((prev) => Math.max(0, prev - 1));
+            break;
         }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [props.onEscape, props.onDeleteSelected, props.onNudgeParts, props.onRotateSelectedParts, props.onOrientSelectedParts, props.selectedPartIds, props.mode, isPlacingSupport, rotateAxis, dragState]);
+  }, [
+    props.onEscape,
+    props.onDeleteSelected,
+    props.onNudgeParts,
+    props.onRotateSelectedParts,
+    props.onOrientSelectedParts,
+    props.selectedPartIds,
+    props.mode,
+    isPlacingSupport,
+    rotateAxis,
+    dragState,
+  ]);
 
   // Start box-select on shift+pointerdown on empty space
   const handleViewportPointerDown = useCallback(
@@ -1598,22 +1779,24 @@ export function ViewportCanvas(props: ViewportProps) {
       if (pendingDragRef.current) return;
       boxSelectRef.current = { startX: e.clientX, startY: e.clientY };
     },
-    [props.mode]
+    [props.mode],
   );
 
   // Hint text
   let hintText: string | null = null;
   if (dragState) {
     const dragDef = getPartDefinition(dragState.definitionId);
-    hintText = dragDef?.category === "support"
-      ? "T(X) R(Y) F(Z) rotate · O orientation · W/S raise/lower · Release to place · Esc cancel"
-      : "T(X) R(Y) F(Z) rotate · W/S raise/lower · Release to place · Esc cancel";
+    hintText =
+      dragDef?.category === "support"
+        ? "T(X) R(Y) F(Z) rotate · O orientation · W/S raise/lower · Release to place · Esc cancel"
+        : "T(X) R(Y) F(Z) rotate · W/S raise/lower · Release to place · Esc cancel";
   } else if (props.mode.type === "place") {
     hintText = isPlacingSupport
       ? "Click to place · T(X) R(Y) F(Z) rotate · O orientation · W/S raise/lower · Esc cancel"
       : "Click to place · T(X) R(Y) F(Z) rotate · W/S raise/lower · Esc cancel";
   } else if (props.mode.type === "select" && props.selectedPartIds.size > 0) {
-    hintText = "Arrow keys nudge · Shift+arrow fine nudge · w/s up and down - ctrl-c/v copy/paste - Del delete · Esc deselect";
+    hintText =
+      "Arrow keys nudge · Shift+arrow fine nudge · w/s up and down - ctrl-c/v copy/paste - Del delete · Esc deselect";
   } else if (props.mode.type === "paste") {
     hintText = `Click to paste ${props.mode.clipboard.parts.length} part(s) · T(X) R(Y) F(Z) rotate · Esc cancel`;
   }
@@ -1624,10 +1807,7 @@ export function ViewportCanvas(props: ViewportProps) {
       data-placing={props.mode.type === "place" ? props.mode.definitionId : undefined}
       onPointerDown={handleViewportPointerDown}
     >
-      <Canvas
-        gl={{ antialias: true }}
-        scene={{ background: new THREE.Color("#3d3d5c") }}
-      >
+      <Canvas gl={{ antialias: true }} scene={{ background: new THREE.Color("#3d3d5c") }}>
         {isOrthographic ? (
           <OrthographicCamera makeDefault position={[150, 200, 150]} near={-20000} far={20000} zoom={1} />
         ) : (
@@ -1654,12 +1834,8 @@ export function ViewportCanvas(props: ViewportProps) {
         onClick={handleToggleCameraMode}
         title="Toggle perspective/orthographic camera"
       >
-        <span className="viewport-camera-toggle__thumb">
-          {isOrthographic ? <OrthoIcon /> : <PerspIcon />}
-        </span>
-        <span className="viewport-camera-toggle__label">
-          {isOrthographic ? "ORTHO" : "PERSP"}
-        </span>
+        <span className="viewport-camera-toggle__thumb">{isOrthographic ? <OrthoIcon /> : <PerspIcon />}</span>
+        <span className="viewport-camera-toggle__label">{isOrthographic ? "ORTHO" : "PERSP"}</span>
       </button>
       {boxSelectRect && (
         <div
@@ -1672,16 +1848,8 @@ export function ViewportCanvas(props: ViewportProps) {
           }}
         />
       )}
-      {hintText && (
-        <div className="viewport-hint">
-          {hintText}
-        </div>
-      )}
-      {computingCollisions && (
-        <div className="collision-computing-indicator">
-          Computing collisions...
-        </div>
-      )}
+      {hintText && <div className="viewport-hint">{hintText}</div>}
+      {computingCollisions && <div className="collision-computing-indicator">Computing collisions...</div>}
     </div>
   );
 }

@@ -6,27 +6,17 @@ test.describe("Part color", () => {
   });
 
   test("setPartColor persists on the data model", async ({ appPage: page }) => {
-    const id = await page.evaluate(() =>
-      (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0])
-    );
+    const id = await page.evaluate(() => (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0]));
     expect(id).not.toBeNull();
 
-    await page.evaluate(
-      ([id]) => (window as any).__assembly.setPartColor(id, "#ff0000"),
-      [id]
-    );
+    await page.evaluate(([id]) => (window as any).__assembly.setPartColor(id, "#ff0000"), [id]);
 
-    const color = await page.evaluate(
-      ([id]) => (window as any).__assembly.getPartById(id)?.color,
-      [id]
-    );
+    const color = await page.evaluate(([id]) => (window as any).__assembly.getPartById(id)?.color, [id]);
     expect(color).toBe("#ff0000");
   });
 
   test("setPartColor undefined resets to default", async ({ appPage: page }) => {
-    const id = await page.evaluate(() =>
-      (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0])
-    );
+    const id = await page.evaluate(() => (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0]));
 
     await page.evaluate(
       ([id]) => {
@@ -34,23 +24,16 @@ test.describe("Part color", () => {
         a.setPartColor(id, "#ff0000");
         a.setPartColor(id, undefined);
       },
-      [id]
+      [id],
     );
 
-    const color = await page.evaluate(
-      ([id]) => (window as any).__assembly.getPartById(id)?.color,
-      [id]
-    );
+    const color = await page.evaluate(([id]) => (window as any).__assembly.getPartById(id)?.color, [id]);
     expect(color).toBeUndefined();
   });
 
   test("color picker hidden when nothing selected", async ({ appPage: page }) => {
-    await page.evaluate(() =>
-      (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0])
-    );
-    const visible = await page.evaluate(
-      () => !!document.querySelector(".color-picker")
-    );
+    await page.evaluate(() => (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0]));
+    const visible = await page.evaluate(() => !!document.querySelector(".color-picker"));
     expect(visible).toBe(false);
   });
 
@@ -75,13 +58,10 @@ test.describe("Part color", () => {
 
   test("color preserved when added via addPart parameter", async ({ appPage: page }) => {
     const id = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-3u", [0, 0, 0], [0, 0, 0], undefined, "#abcdef")
+      (window as any).__assembly.addPart("support-3u", [0, 0, 0], [0, 0, 0], undefined, "#abcdef"),
     );
 
-    const color = await page.evaluate(
-      ([id]) => (window as any).__assembly.getPartById(id)?.color,
-      [id]
-    );
+    const color = await page.evaluate(([id]) => (window as any).__assembly.getPartById(id)?.color, [id]);
     expect(color).toBe("#abcdef");
   });
 
@@ -91,10 +71,7 @@ test.describe("Part color", () => {
       const id1 = a.addPart("support-3u", [0, 0, 0]);
       const id2 = a.addPart("support-3u", [1, 0, 0]);
       a.setPartsColor([id1, id2], "#ff8c00");
-      return [
-        a.getPartById(id1)?.color,
-        a.getPartById(id2)?.color,
-      ];
+      return [a.getPartById(id1)?.color, a.getPartById(id2)?.color];
     });
 
     expect(colors[0]).toBe("#ff8c00");

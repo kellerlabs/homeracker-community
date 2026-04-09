@@ -5,63 +5,45 @@ test.describe("Orientation-aware grid occupancy", () => {
     await page.evaluate(() => (window as any).__assembly.clear());
   });
 
-  test("x-oriented support occupies cells along X axis", async ({
-    appPage: page,
-  }) => {
+  test("x-oriented support occupies cells along X axis", async ({ appPage: page }) => {
     const orientedId = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-3u", [0, 0, 0], [0, 0, 0], "x")
+      (window as any).__assembly.addPart("support-3u", [0, 0, 0], [0, 0, 0], "x"),
     );
     expect(orientedId).not.toBeNull();
 
     // Cell [1,0,0] should be occupied
-    const occupied = await page.evaluate(() =>
-      (window as any).__assembly.isOccupied([1, 0, 0])
-    );
+    const occupied = await page.evaluate(() => (window as any).__assembly.isOccupied([1, 0, 0]));
     expect(occupied).toBe(true);
 
     // Cell [2,0,0] should also be occupied
-    const occupied2 = await page.evaluate(() =>
-      (window as any).__assembly.isOccupied([2, 0, 0])
-    );
+    const occupied2 = await page.evaluate(() => (window as any).__assembly.isOccupied([2, 0, 0]));
     expect(occupied2).toBe(true);
 
     // Cell [0,1,0] should be free
-    const free1 = await page.evaluate(() =>
-      (window as any).__assembly.isOccupied([0, 1, 0])
-    );
+    const free1 = await page.evaluate(() => (window as any).__assembly.isOccupied([0, 1, 0]));
     expect(free1).toBe(false);
 
     // Cell [0,0,1] should also be free
-    const free2 = await page.evaluate(() =>
-      (window as any).__assembly.isOccupied([0, 0, 1])
-    );
+    const free2 = await page.evaluate(() => (window as any).__assembly.isOccupied([0, 0, 1]));
     expect(free2).toBe(false);
   });
 
-  test("z-oriented support occupies cells along Z axis", async ({
-    appPage: page,
-  }) => {
+  test("z-oriented support occupies cells along Z axis", async ({ appPage: page }) => {
     const orientedZ = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-3u", [0, 0, 0], [0, 0, 0], "z")
+      (window as any).__assembly.addPart("support-3u", [0, 0, 0], [0, 0, 0], "z"),
     );
     expect(orientedZ).not.toBeNull();
 
-    const occupiedZ1 = await page.evaluate(() =>
-      (window as any).__assembly.isOccupied([0, 0, 1])
-    );
+    const occupiedZ1 = await page.evaluate(() => (window as any).__assembly.isOccupied([0, 0, 1]));
     expect(occupiedZ1).toBe(true);
 
-    const freeY1 = await page.evaluate(() =>
-      (window as any).__assembly.isOccupied([0, 1, 0])
-    );
+    const freeY1 = await page.evaluate(() => (window as any).__assembly.isOccupied([0, 1, 0]));
     expect(freeY1).toBe(false);
   });
 });
 
 test.describe("Placement always succeeds (no collision)", () => {
-  test("parts can overlap freely", async ({
-    appPage: page,
-  }) => {
+  test("parts can overlap freely", async ({ appPage: page }) => {
     const results = await page.evaluate(() => {
       const a = (window as any).__assembly;
       a.clear();
@@ -86,9 +68,7 @@ test.describe("Placement always succeeds (no collision)", () => {
 });
 
 test.describe("Rotation-aware grid occupancy", () => {
-  test("90° X rotation moves cells from Y to Z axis", async ({
-    appPage: page,
-  }) => {
+  test("90° X rotation moves cells from Y to Z axis", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       a.clear();
@@ -118,14 +98,20 @@ test.describe("Rotation-aware grid occupancy", () => {
 });
 
 test.describe("Auto-lift: rotation pushes part above ground", () => {
-  test("computeGroundLift returns correct offset for rotated support", async ({
-    appPage: page,
-  }) => {
+  test("computeGroundLift returns correct offset for rotated support", async ({ appPage: page }) => {
     const results = await page.evaluate(() => {
       const lift = (window as any).__computeGroundLift;
 
       // Get support-3u definition (gridCells: [0,0,0],[0,1,0],[0,2,0])
-      const def = { gridCells: [[0,0,0],[0,1,0],[0,2,0]], connectionPoints: [], category: "support" };
+      const def = {
+        gridCells: [
+          [0, 0, 0],
+          [0, 1, 0],
+          [0, 2, 0],
+        ],
+        connectionPoints: [],
+        category: "support",
+      };
 
       return {
         // No rotation → minY = 0 → lift = 0
@@ -148,9 +134,7 @@ test.describe("Auto-lift: rotation pushes part above ground", () => {
     expect(results.rot90z).toBe(0);
   });
 
-  test("computeGroundLift accounts for connector arm directions", async ({
-    appPage: page,
-  }) => {
+  test("computeGroundLift accounts for connector arm directions", async ({ appPage: page }) => {
     const results = await page.evaluate(() => {
       const lift = (window as any).__computeGroundLift;
 
@@ -177,9 +161,7 @@ test.describe("Auto-lift: rotation pushes part above ground", () => {
     expect(results.rot90x).toBe(0);
   });
 
-  test("support with 180° X rotation can be placed at lifted Y", async ({
-    appPage: page,
-  }) => {
+  test("support with 180° X rotation can be placed at lifted Y", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       a.clear();
@@ -195,18 +177,14 @@ test.describe("Auto-lift: rotation pushes part above ground", () => {
 });
 
 test.describe("Orientation keyboard hint", () => {
-  test("support hint mentions orientation, connector mentions rotate", async ({
-    appPage: page,
-  }) => {
+  test("support hint mentions orientation, connector mentions rotate", async ({ appPage: page }) => {
     await clickCatalogItem(page, "Support (3u)");
-    const supportHint = await page.evaluate(
-      () => document.querySelector(".viewport-hint")?.textContent?.trim() ?? ""
-    );
+    const supportHint = await page.evaluate(() => document.querySelector(".viewport-hint")?.textContent?.trim() ?? "");
     expect(supportHint).toContain("orientation");
 
     await clickCatalogItem(page, "3D 6-Way");
     const connectorHint = await page.evaluate(
-      () => document.querySelector(".viewport-hint")?.textContent?.trim() ?? ""
+      () => document.querySelector(".viewport-hint")?.textContent?.trim() ?? "",
     );
     expect(connectorHint).toContain("rotate");
     expect(connectorHint).not.toContain("orientation");

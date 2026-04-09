@@ -77,9 +77,15 @@ function isValidPullThroughCell(ids: string[], assembly: AssemblyState): boolean
 
   for (const id of ids) {
     const part = assembly.getPartById(id);
-    if (!part) { otherCount++; continue; }
+    if (!part) {
+      otherCount++;
+      continue;
+    }
     const def = getPartDefinition(part.definitionId);
-    if (!def) { otherCount++; continue; }
+    if (!def) {
+      otherCount++;
+      continue;
+    }
 
     if (def.category === "connector" && def.pullThroughAxis) {
       ptConnectorCount++;

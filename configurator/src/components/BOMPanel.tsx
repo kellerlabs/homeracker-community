@@ -33,16 +33,28 @@ function exportCSV(entries: BOMEntry[], inventory: Record<string, number>) {
   URL.revokeObjectURL(url);
 }
 
-export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlashDefinition, onSetColor, inventory, onSetInventory }: BOMPanelProps) {
+export function BOMPanel({
+  entries,
+  selectedPartIds,
+  parts,
+  onFlashPart,
+  onFlashDefinition,
+  onSetColor,
+  inventory,
+  onSetInventory,
+}: BOMPanelProps) {
   const totalParts = entries.reduce((sum, e) => sum + e.quantity, 0);
   const [showInventory, setShowInventory] = useState(false);
 
   const selectedParts = parts.filter((p) => selectedPartIds.has(p.instanceId));
 
   // If all selected parts share the same color, show it; otherwise null (mixed)
-  const currentColor = selectedParts.length > 0
-    ? (selectedParts.every((p) => p.color === selectedParts[0].color) ? (selectedParts[0].color ?? null) : null)
-    : null;
+  const currentColor =
+    selectedParts.length > 0
+      ? selectedParts.every((p) => p.color === selectedParts[0].color)
+        ? (selectedParts[0].color ?? null)
+        : null
+      : null;
 
   const totalNeed = showInventory
     ? entries.reduce((sum, e) => sum + Math.max(0, e.quantity - (inventory[e.definitionId] || 0)), 0)
@@ -72,11 +84,7 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlash
             {selectedParts.map((p) => {
               const def = getPartDefinition(p.definitionId);
               return (
-                <li
-                  key={p.instanceId}
-                  className="selection-item"
-                  onClick={() => onFlashPart(p.instanceId)}
-                >
+                <li key={p.instanceId} className="selection-item" onClick={() => onFlashPart(p.instanceId)}>
                   {def?.name ?? p.definitionId}
                 </li>
               );
@@ -96,11 +104,7 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlash
             >
               Inventory
             </button>
-            <button
-              className="bom-export-btn"
-              onClick={() => exportCSV(entries, inventory)}
-              title="Export as CSV"
-            >
+            <button className="bom-export-btn" onClick={() => exportCSV(entries, inventory)} title="Export as CSV">
               Export CSV
             </button>
           </div>
@@ -109,8 +113,7 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlash
 
       {entries.length === 0 ? (
         <p className="bom-empty">
-          No parts placed yet. Select a part from the catalog and click on the
-          grid to place it.
+          No parts placed yet. Select a part from the catalog and click on the grid to place it.
         </p>
       ) : (
         <>
@@ -152,9 +155,7 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlash
                       </td>
                     )}
                     {showInventory && (
-                      <td className={`bom-need${need > 0 ? " bom-need-remaining" : " bom-need-done"}`}>
-                        {need}
-                      </td>
+                      <td className={`bom-need${need > 0 ? " bom-need-remaining" : " bom-need-done"}`}>{need}</td>
                     )}
                     {showInventory && (
                       <td className={`bom-excess${excess > 0 ? " bom-excess-has" : ""}`}>
@@ -173,7 +174,6 @@ export function BOMPanel({ entries, selectedPartIds, parts, onFlashPart, onFlash
           </div>
         </>
       )}
-
     </div>
   );
 }

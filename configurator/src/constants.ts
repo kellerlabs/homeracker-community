@@ -36,14 +36,14 @@ export const GRID_MAJOR_COLOR = "#666666";
 
 // Part colors for the 3D viewer
 export const PART_COLORS = {
-  support: "#f7b600",    // HR_YELLOW
-  connector: "#2196f3",  // HR_BLUE (brightened for dark UI contrast)
-  lockpin: "#c41e3a",    // HR_RED
+  support: "#f7b600", // HR_YELLOW
+  connector: "#2196f3", // HR_BLUE (brightened for dark UI contrast)
+  lockpin: "#c41e3a", // HR_RED
   ghost_valid: "#44ff44",
   ghost_invalid: "#ff4444",
   ghost_snapped: "#00ffcc",
   selected: "#00aaff",
-  other: "#4a9e4a",      // HR_GREEN (misc/other parts)
+  other: "#4a9e4a", // HR_GREEN (misc/other parts)
   custom: "#6b3a7d",
   collision: "#ff0000",
 } as const;

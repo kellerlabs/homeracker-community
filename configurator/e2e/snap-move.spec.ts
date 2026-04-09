@@ -20,12 +20,8 @@ test.describe("Snap point discovery", () => {
         count: points.length,
         orientations: [...new Set(orientations)],
         directions: [...new Set(directions)],
-        hasZSnap: points.some(
-          (p: any) => p.orientation === "z" && p.socketDirection === "+z"
-        ),
-        hasXSnap: points.some(
-          (p: any) => p.orientation === "x" && p.socketDirection === "+x"
-        ),
+        hasZSnap: points.some((p: any) => p.orientation === "z" && p.socketDirection === "+z"),
+        hasXSnap: points.some((p: any) => p.orientation === "x" && p.socketDirection === "+x"),
       };
     });
 
@@ -35,9 +31,7 @@ test.describe("Snap point discovery", () => {
     expect(result.orientations.length).toBeGreaterThanOrEqual(2);
   });
 
-  test("findBestSnap returns nearest candidate", async ({
-    appPage: page,
-  }) => {
+  test("findBestSnap returns nearest candidate", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       const snap = (window as any).__snap;
@@ -114,9 +108,7 @@ test.describe("2D2W L-shape connector snap", () => {
     expect(result.xOrient).toBe("x");
   });
 
-  test("placing support at +x snap occupies correct cells", async ({
-    appPage: page,
-  }) => {
+  test("placing support at +x snap occupies correct cells", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       const snap = (window as any).__snap;
@@ -127,12 +119,7 @@ test.describe("2D2W L-shape connector snap", () => {
       const xSnap = points.find((p: any) => p.socketDirection === "+x");
       if (!xSnap) return { placed: false, reason: "no +x snap found" };
 
-      const id = a.addPart(
-        "support-5u",
-        xSnap.position,
-        [0, 0, 0],
-        xSnap.orientation
-      );
+      const id = a.addPart("support-5u", xSnap.position, [0, 0, 0], xSnap.orientation);
       if (!id) return { placed: false, reason: "addPart returned null" };
 
       const expectedCells: [number, number, number][] = [
@@ -153,9 +140,7 @@ test.describe("2D2W L-shape connector snap", () => {
     expect(result.connectorCellStillOccupied).toBe(true);
   });
 
-  test("no snap candidates after both slots filled", async ({
-    appPage: page,
-  }) => {
+  test("no snap candidates after both slots filled", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       const snap = (window as any).__snap;
@@ -196,12 +181,7 @@ test.describe("Connector snap to vertical support top", () => {
       a.clear();
       a.addPart("support-5u", [5, 0, 5], [0, 0, 0], "y");
 
-      const points = snap.findConnectorSnapPoints(
-        a,
-        "connector-3d6w",
-        [5, 0, 5],
-        3
-      );
+      const points = snap.findConnectorSnapPoints(a, "connector-3d6w", [5, 0, 5], 3);
       const topSnap = points.find((p: any) => p.socketDirection === "+y");
       const bottomSnap = points.find((p: any) => p.socketDirection === "-y");
 
@@ -218,21 +198,14 @@ test.describe("Connector snap to vertical support top", () => {
     expect(result.hasBottomSnap).toBe(false);
   });
 
-  test("connector snaps to top of 10u support", async ({
-    appPage: page,
-  }) => {
+  test("connector snaps to top of 10u support", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       const snap = (window as any).__snap;
       a.clear();
       a.addPart("support-10u", [5, 0, 5], [0, 0, 0], "y");
 
-      const points = snap.findConnectorSnapPoints(
-        a,
-        "connector-2d2w",
-        [5, 0, 5],
-        3
-      );
+      const points = snap.findConnectorSnapPoints(a, "connector-2d2w", [5, 0, 5], 3);
       const topSnap = points.find((p: any) => p.socketDirection === "+y");
 
       return {
@@ -256,39 +229,18 @@ test.describe("Ray-based snap proximity", () => {
       a.addPart("support-10u", [5, 0, 5], [0, 0, 0], "y");
 
       // Without ray — cursor too far on XZ plane
-      const withoutRay = snap.findConnectorSnapPoints(
-        a,
-        "connector-3d6w",
-        [5, 0, 10],
-        3
-      );
-      const topWithoutRay = withoutRay.find(
-        (p: any) => p.socketDirection === "+y"
-      );
+      const withoutRay = snap.findConnectorSnapPoints(a, "connector-3d6w", [5, 0, 10], 3);
+      const topWithoutRay = withoutRay.find((p: any) => p.socketDirection === "+y");
 
       // With ray pointing toward support top
       const rayOrigin = [5, 20, 15] as [number, number, number];
       const rawDir = [0, -10, -10] as [number, number, number];
-      const len = Math.sqrt(
-        rawDir[0] ** 2 + rawDir[1] ** 2 + rawDir[2] ** 2
-      );
-      const rayDir = [
-        rawDir[0] / len,
-        rawDir[1] / len,
-        rawDir[2] / len,
-      ] as [number, number, number];
+      const len = Math.sqrt(rawDir[0] ** 2 + rawDir[1] ** 2 + rawDir[2] ** 2);
+      const rayDir = [rawDir[0] / len, rawDir[1] / len, rawDir[2] / len] as [number, number, number];
       const ray = { origin: rayOrigin, direction: rayDir };
 
-      const withRay = snap.findConnectorSnapPoints(
-        a,
-        "connector-3d6w",
-        [5, 0, 10],
-        3,
-        ray
-      );
-      const topWithRay = withRay.find(
-        (p: any) => p.socketDirection === "+y"
-      );
+      const withRay = snap.findConnectorSnapPoints(a, "connector-3d6w", [5, 0, 10], 3, ray);
+      const topWithRay = withRay.find((p: any) => p.socketDirection === "+y");
 
       return {
         hasTopWithoutRay: !!topWithoutRay,
@@ -304,9 +256,7 @@ test.describe("Ray-based snap proximity", () => {
 });
 
 test.describe("Move part (programmatic)", () => {
-  test("move frees old position and occupies new", async ({
-    appPage: page,
-  }) => {
+  test("move frees old position and occupies new", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       a.clear();
@@ -318,12 +268,7 @@ test.describe("Move part (programmatic)", () => {
       if (!part) return { success: false, reason: "part not found" };
 
       a.removePart(id);
-      const newId = a.addPart(
-        part.definitionId,
-        [3, 1, 3],
-        part.rotation,
-        part.orientation
-      );
+      const newId = a.addPart(part.definitionId, [3, 1, 3], part.rotation, part.orientation);
 
       return {
         success: newId !== null,
@@ -339,9 +284,7 @@ test.describe("Move part (programmatic)", () => {
 });
 
 test.describe("No page errors", () => {
-  test("no unexpected page errors during test run", async ({
-    appPage: page,
-  }) => {
+  test("no unexpected page errors during test run", async ({ appPage: page }) => {
     // Page errors are collected by the appPage fixture
     // This test just validates the page loaded without issues
     const hasApp = await page.evaluate(() => !!document.querySelector(".app"));

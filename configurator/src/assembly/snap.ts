@@ -297,9 +297,7 @@ export function computeAutoRotation(
   if (!def) return fallbackRotation;
 
   // Get base arm directions from connection points
-  const baseArmDirs = def.connectionPoints
-    .filter(cp => cp.type === "female")
-    .map(cp => cp.direction);
+  const baseArmDirs = def.connectionPoints.filter((cp) => cp.type === "female").map((cp) => cp.direction);
 
   if (baseArmDirs.length === 0) return fallbackRotation;
 
@@ -310,7 +308,10 @@ export function computeAutoRotation(
 
   // Distance between two rotations (minimum steps to go from one to the other)
   const rotDist = (a: Rotation3, b: Rotation3) => {
-    const d = (v1: number, v2: number) => { const diff = ((v1 - v2) % 360 + 360) % 360; return Math.min(diff, 360 - diff) / 90; };
+    const d = (v1: number, v2: number) => {
+      const diff = (((v1 - v2) % 360) + 360) % 360;
+      return Math.min(diff, 360 - diff) / 90;
+    };
     return d(a[0], b[0]) + d(a[1], b[1]) + d(a[2], b[2]);
   };
 
@@ -320,7 +321,7 @@ export function computeAutoRotation(
         const rotation: Rotation3 = [rx, ry, rz];
 
         // Rotate all arm directions by this rotation
-        const rotatedArms = baseArmDirs.map(d => rotateDirection(d, rotation));
+        const rotatedArms = baseArmDirs.map((d) => rotateDirection(d, rotation));
 
         // Count how many needed directions are covered
         let coverage = 0;
@@ -354,7 +355,14 @@ export function findBestConnectorSnap(
   ray?: GridRay,
   connectorRotation?: Rotation3,
 ): SnapCandidate | null {
-  const candidates = findConnectorSnapPoints(assembly, connectorDefId, cursorGridPos, snapRadius, ray, connectorRotation);
+  const candidates = findConnectorSnapPoints(
+    assembly,
+    connectorDefId,
+    cursorGridPos,
+    snapRadius,
+    ray,
+    connectorRotation,
+  );
   if (candidates.length === 0) return null;
 
   const best = candidates[0];
@@ -365,7 +373,11 @@ export function findBestConnectorSnap(
   const seen = new Set<Direction>();
   const neededDirs: Direction[] = [];
   for (const c of candidates) {
-    if (c.position[0] === best.position[0] && c.position[1] === best.position[1] && c.position[2] === best.position[2]) {
+    if (
+      c.position[0] === best.position[0] &&
+      c.position[1] === best.position[1] &&
+      c.position[2] === best.position[2]
+    ) {
       const opp = oppositeDir(c.socketDirection);
       if (!seen.has(opp)) {
         seen.add(opp);

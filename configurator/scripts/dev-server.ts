@@ -89,7 +89,7 @@ const server = Bun.serve({
     // Rewrite the script src to point to the built JS
     const rewritten = indexContent.replace(
       '<script type="module" src="/src/main.tsx"></script>',
-      '<script type="module" src="/src/main.js"></script>'
+      '<script type="module" src="/src/main.js"></script>',
     );
     return new Response(rewritten, {
       headers: { "Content-Type": "text/html" },

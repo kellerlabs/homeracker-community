@@ -1,24 +1,16 @@
 import { test, expect, clickCatalogItem, getBBox, waitForMesh, waitForBOM } from "./fixtures";
 
 test.describe("No geometry below ground (Y=0)", () => {
-  test("connector-3d6w can be placed at Y=0 (no collision system)", async ({
-    appPage: page,
-  }) => {
+  test("connector-3d6w can be placed at Y=0 (no collision system)", async ({ appPage: page }) => {
     await page.evaluate(() => (window as any).__assembly.clear());
-    const id = await page.evaluate(() =>
-      (window as any).__assembly.addPart("connector-3d6w", [0, 0, 0])
-    );
+    const id = await page.evaluate(() => (window as any).__assembly.addPart("connector-3d6w", [0, 0, 0]));
     // No collision system — placement always succeeds
     expect(id).not.toBeNull();
   });
 
-  test("connector-3d6w at Y=1 is allowed (arm reaches Y=0)", async ({
-    appPage: page,
-  }) => {
+  test("connector-3d6w at Y=1 is allowed (arm reaches Y=0)", async ({ appPage: page }) => {
     await page.evaluate(() => (window as any).__assembly.clear());
-    const id = await page.evaluate(() =>
-      (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0])
-    );
+    const id = await page.evaluate(() => (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0]));
     expect(id).not.toBeNull();
     await waitForMesh(page, `placed-${id}`);
 
@@ -27,13 +19,9 @@ test.describe("No geometry below ground (Y=0)", () => {
     expect(bbox!.minY).toBeGreaterThanOrEqual(-0.1);
   });
 
-  test("support at ground level has minY >= 0", async ({
-    appPage: page,
-  }) => {
+  test("support at ground level has minY >= 0", async ({ appPage: page }) => {
     await page.evaluate(() => (window as any).__assembly.clear());
-    const id = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-3u", [0, 0, 0])
-    );
+    const id = await page.evaluate(() => (window as any).__assembly.addPart("support-3u", [0, 0, 0]));
     expect(id).not.toBeNull();
     await waitForMesh(page, `placed-${id}`);
 
@@ -42,13 +30,9 @@ test.describe("No geometry below ground (Y=0)", () => {
     expect(bbox!.minY).toBeGreaterThanOrEqual(-0.1);
   });
 
-  test("x-oriented support at ground level has minY >= 0", async ({
-    appPage: page,
-  }) => {
+  test("x-oriented support at ground level has minY >= 0", async ({ appPage: page }) => {
     await page.evaluate(() => (window as any).__assembly.clear());
-    const id = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-5u", [0, 0, 0], [0, 0, 0], "x")
-    );
+    const id = await page.evaluate(() => (window as any).__assembly.addPart("support-5u", [0, 0, 0], [0, 0, 0], "x"));
     expect(id).not.toBeNull();
     await waitForMesh(page, `placed-${id}`);
 
@@ -57,25 +41,17 @@ test.describe("No geometry below ground (Y=0)", () => {
     expect(bbox!.minY).toBeGreaterThanOrEqual(-0.1);
   });
 
-  test("rotated connector with arm below ground is allowed (no collision)", async ({
-    appPage: page,
-  }) => {
+  test("rotated connector with arm below ground is allowed (no collision)", async ({ appPage: page }) => {
     await page.evaluate(() => (window as any).__assembly.clear());
     // connector-2d4w rotated 90° around X: a horizontal arm becomes -Y
     // No collision system — placement always succeeds
-    const id = await page.evaluate(() =>
-      (window as any).__assembly.addPart("connector-2d4w", [0, 0, 0], [90, 0, 0])
-    );
+    const id = await page.evaluate(() => (window as any).__assembly.addPart("connector-2d4w", [0, 0, 0], [90, 0, 0]));
     expect(id).not.toBeNull();
   });
 
-  test("connector-3d5w (no -Y arm) can be placed at Y=0", async ({
-    appPage: page,
-  }) => {
+  test("connector-3d5w (no -Y arm) can be placed at Y=0", async ({ appPage: page }) => {
     await page.evaluate(() => (window as any).__assembly.clear());
-    const id = await page.evaluate(() =>
-      (window as any).__assembly.addPart("connector-3d5w", [0, 0, 0])
-    );
+    const id = await page.evaluate(() => (window as any).__assembly.addPart("connector-3d5w", [0, 0, 0]));
     expect(id).not.toBeNull();
   });
 });
@@ -86,9 +62,7 @@ test.describe("Place parts and BOM", () => {
   });
 
   test("place connector and verify BOM", async ({ appPage: page }) => {
-    const placed1 = await page.evaluate(() =>
-      (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0])
-    );
+    const placed1 = await page.evaluate(() => (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0]));
     expect(placed1).not.toBeNull();
     await waitForBOM(page, 1);
 
@@ -105,9 +79,7 @@ test.describe("Place parts and BOM", () => {
     expect(bom1[0].qty).toBe("1");
   });
 
-  test("place two connectors updates BOM quantity", async ({
-    appPage: page,
-  }) => {
+  test("place two connectors updates BOM quantity", async ({ appPage: page }) => {
     await page.evaluate(() => {
       const a = (window as any).__assembly;
       a.addPart("connector-3d6w", [0, 1, 0]);
@@ -126,9 +98,7 @@ test.describe("Place parts and BOM", () => {
     expect(bom.some((r) => r.qty === "2")).toBe(true);
   });
 
-  test("place mixed parts shows multiple BOM rows", async ({
-    appPage: page,
-  }) => {
+  test("place mixed parts shows multiple BOM rows", async ({ appPage: page }) => {
     await page.evaluate(() => {
       const a = (window as any).__assembly;
       a.addPart("connector-3d6w", [0, 1, 0]);
@@ -158,15 +128,11 @@ test.describe("Place parts and BOM", () => {
     });
     await waitForBOM(page, 2);
 
-    const totalText = await page.evaluate(
-      () => document.querySelector(".bom-total")?.textContent?.trim() ?? ""
-    );
+    const totalText = await page.evaluate(() => document.querySelector(".bom-total")?.textContent?.trim() ?? "");
     expect(totalText).toContain("parts");
   });
 
-  test("BOM lock pins with oriented supports", async ({
-    appPage: page,
-  }) => {
+  test("BOM lock pins with oriented supports", async ({ appPage: page }) => {
     await page.evaluate(() => {
       const a = (window as any).__assembly;
       a.addPart("connector-3d6w", [0, 1, 0]);
@@ -189,13 +155,9 @@ test.describe("Place parts and BOM", () => {
 test.describe("Overlapping placement (no collision)", () => {
   test("can place on occupied position", async ({ appPage: page }) => {
     await page.evaluate(() => (window as any).__assembly.clear());
-    await page.evaluate(() =>
-      (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0])
-    );
+    await page.evaluate(() => (window as any).__assembly.addPart("connector-3d6w", [0, 1, 0]));
 
-    const overlap = await page.evaluate(() =>
-      (window as any).__assembly.addPart("connector-2d2w", [0, 1, 0])
-    );
+    const overlap = await page.evaluate(() => (window as any).__assembly.addPart("connector-2d2w", [0, 1, 0]));
     expect(overlap).not.toBeNull();
   });
 });
@@ -219,10 +181,7 @@ test.describe("Clear All", () => {
         }
       }
     });
-    await page.waitForFunction(
-      () => (window as any).__assembly.getAllParts().length === 0,
-      { timeout: 3_000 },
-    );
+    await page.waitForFunction(() => (window as any).__assembly.getAllParts().length === 0, { timeout: 3_000 });
 
     const afterClear = await page.evaluate(() => {
       const emptyMsg = document.querySelector(".bom-empty");
@@ -248,9 +207,7 @@ test.describe("Clear All", () => {
       a.clear();
     });
 
-    const result = await page.evaluate(() =>
-      (window as any).__assembly.addPart("connector-2d4w", [0, 0, 0])
-    );
+    const result = await page.evaluate(() => (window as any).__assembly.addPart("connector-2d4w", [0, 0, 0]));
     expect(result).not.toBeNull();
   });
 });
@@ -291,14 +248,9 @@ test.describe("Placed part orientation matches ghost", () => {
 
     // Exit and place via API
     await page.keyboard.press("Escape");
-    await page.waitForFunction(
-      () => !document.querySelector(".catalog-item.active"),
-      { timeout: 3_000 },
-    );
+    await page.waitForFunction(() => !document.querySelector(".catalog-item.active"), { timeout: 3_000 });
 
-    const supportId = await page.evaluate(() =>
-      (window as any).__assembly.addPart("support-3u", [0, 0, 0])
-    );
+    const supportId = await page.evaluate(() => (window as any).__assembly.addPart("support-3u", [0, 0, 0]));
     expect(supportId).not.toBeNull();
 
     await waitForMesh(page, `placed-${supportId}`);
@@ -318,8 +270,7 @@ test.describe("Placed part orientation matches ghost", () => {
             ? "X"
             : "Z";
       const placedTallAxis =
-        placedBBox.sizeY > placedBBox.sizeX &&
-        placedBBox.sizeY > placedBBox.sizeZ
+        placedBBox.sizeY > placedBBox.sizeX && placedBBox.sizeY > placedBBox.sizeZ
           ? "Y"
           : placedBBox.sizeX > placedBBox.sizeZ
             ? "X"

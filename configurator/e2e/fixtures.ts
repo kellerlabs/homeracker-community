@@ -6,7 +6,9 @@ import { test as base, type Page } from "@playwright/test";
 export async function waitForApp(page: Page) {
   await page.waitForSelector(".app", { timeout: 10_000 });
   // Wait for R3F to mount and expose the scene object
-  await page.waitForFunction(() => !!(window as any).__scene, { timeout: 10_000 });
+  await page.waitForFunction(() => !!(window as any).__scene, {
+    timeout: 10_000,
+  });
 }
 
 /**
@@ -16,9 +18,7 @@ export async function clickCatalogItem(page: Page, name: string) {
   await page.evaluate((n) => {
     const items = document.querySelectorAll(".catalog-item");
     for (const item of items) {
-      if (
-        item.querySelector(".catalog-item-name")?.textContent?.trim() === n
-      ) {
+      if (item.querySelector(".catalog-item-name")?.textContent?.trim() === n) {
         (item as HTMLElement).click();
         return;
       }
@@ -26,8 +26,9 @@ export async function clickCatalogItem(page: Page, name: string) {
   }, name);
   // Wait for React to process the click
   await page.waitForFunction(
-    (n) => !!document.querySelector(".catalog-item.active .catalog-item-name")
-      || document.querySelector(".viewport")?.getAttribute("data-placing") != null,
+    (n) =>
+      !!document.querySelector(".catalog-item.active .catalog-item-name") ||
+      document.querySelector(".viewport")?.getAttribute("data-placing") != null,
     name,
     { timeout: 3_000 },
   );
@@ -57,11 +58,9 @@ export async function waitForMesh(page: Page, objectName: string, timeout = 10_0
  * Wait for the BOM table to have at least `minRows` rows.
  */
 export async function waitForBOM(page: Page, minRows = 1) {
-  await page.waitForFunction(
-    (min: number) => document.querySelectorAll(".bom-table tbody tr").length >= min,
-    minRows,
-    { timeout: 5_000 },
-  );
+  await page.waitForFunction((min: number) => document.querySelectorAll(".bom-table tbody tr").length >= min, minRows, {
+    timeout: 5_000,
+  });
 }
 
 /**
@@ -89,10 +88,7 @@ export async function getBBox(page: Page, objectName: string) {
         if (i === 0) {
           chain[i].matrixWorld.copy(chain[i].matrix);
         } else {
-          chain[i].matrixWorld.multiplyMatrices(
-            chain[i - 1].matrixWorld,
-            chain[i].matrix
-          );
+          chain[i].matrixWorld.multiplyMatrices(chain[i - 1].matrixWorld, chain[i].matrix);
         }
       }
     };

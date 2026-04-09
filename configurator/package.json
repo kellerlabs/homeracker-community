@@ -10,7 +10,9 @@
     "test:e2e": "npx playwright test",
     "test:e2e:headed": "npx playwright test --headed",
     "test:e2e:ui": "npx playwright test --ui",
-    "screenshot": "bun run scripts/screenshot.ts"
+    "screenshot": "bun run scripts/screenshot.ts",
+		"format": "biome format --write .",
+		"format:check": "biome check --formatter-enabled=true --linter-enabled=false --assist-enabled=false ."
   },
   "dependencies": {
     "@react-three/drei": "^10.0.0",
@@ -21,6 +23,7 @@
     "three-mesh-bvh": "^0.9.9"
   },
   "devDependencies": {
+		"@biomejs/biome": "^2.4.10",
     "@playwright/test": "^1.58.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

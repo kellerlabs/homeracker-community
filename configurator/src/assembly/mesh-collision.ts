@@ -49,11 +49,7 @@ function modelCenterOffset(gridCells: GridPosition[], orientation: Axis = "y"): 
   const maxX = Math.max(...cells.map((c) => c[0]));
   const maxY = Math.max(...cells.map((c) => c[1]));
   const maxZ = Math.max(...cells.map((c) => c[2]));
-  return [
-    ((minX + maxX) / 2) * BASE_UNIT,
-    ((minY + maxY) / 2) * BASE_UNIT,
-    ((minZ + maxZ) / 2) * BASE_UNIT,
-  ];
+  return [((minX + maxX) / 2) * BASE_UNIT, ((minY + maxY) / 2) * BASE_UNIT, ((minZ + maxZ) / 2) * BASE_UNIT];
 }
 
 /**
@@ -134,11 +130,13 @@ function isValidPullThroughPair(partA: PlacedPart, partB: PlacedPart): boolean {
   let connRotation: Rotation3;
 
   if (defA.category === "connector" && defA.pullThroughAxis && defB.category === "support") {
-    connector = partA; support = partB;
+    connector = partA;
+    support = partB;
     ptAxisRaw = defA.pullThroughAxis;
     connRotation = partA.rotation ?? [0, 0, 0];
   } else if (defB.category === "connector" && defB.pullThroughAxis && defA.category === "support") {
-    connector = partB; support = partA;
+    connector = partB;
+    support = partA;
     ptAxisRaw = defB.pullThroughAxis;
     connRotation = partB.rotation ?? [0, 0, 0];
   } else {
@@ -174,10 +172,7 @@ function isValidPullThroughPair(partA: PlacedPart, partB: PlacedPart): boolean {
 }
 
 /** Compute world-space AABB for a part */
-function getPartWorldAABB(
-  part: PlacedPart,
-  mat: THREE.Matrix4,
-): THREE.Box3 | undefined {
+function getPartWorldAABB(part: PlacedPart, mat: THREE.Matrix4): THREE.Box3 | undefined {
   const geo = getGeometryForPart(part.definitionId);
   if (!geo) return undefined;
   geo.computeBoundingBox();
@@ -204,10 +199,7 @@ interface PartCollisionData {
  * 3. AABB mid-phase: skip pairs whose world bounding boxes don't overlap
  * 4. BVH narrow phase: actual mesh intersection test (yielded)
  */
-export async function detectCollidingPartIds(
-  assembly: AssemblyState,
-  signal?: AbortSignal,
-): Promise<Set<string>> {
+export async function detectCollidingPartIds(assembly: AssemblyState, signal?: AbortSignal): Promise<Set<string>> {
   // Broad phase: collect candidate pairs from grid occupancy
   const candidatePairs = new Set<string>();
   for (const [, ids] of assembly.gridOccupancy) {
@@ -229,11 +221,20 @@ export async function detectCollidingPartIds(
   function getPartData(id: string): PartCollisionData | null {
     if (partDataCache.has(id)) return partDataCache.get(id)!;
     const part = assembly.getPartById(id);
-    if (!part) { partDataCache.set(id, null); return null; }
+    if (!part) {
+      partDataCache.set(id, null);
+      return null;
+    }
     const mat = getPartWorldMatrix(part);
-    if (!mat) { partDataCache.set(id, null); return null; }
+    if (!mat) {
+      partDataCache.set(id, null);
+      return null;
+    }
     const aabb = getPartWorldAABB(part, mat);
-    if (!aabb) { partDataCache.set(id, null); return null; }
+    if (!aabb) {
+      partDataCache.set(id, null);
+      return null;
+    }
     const invMat = mat.clone().invert();
     const data: PartCollisionData = { part, mat, invMat, aabb };
     partDataCache.set(id, data);
@@ -243,7 +244,11 @@ export async function detectCollidingPartIds(
   const collidingIds = new Set<string>();
   const pairs = Array.from(candidatePairs);
   const BATCH_SIZE = 10;
-  let ptSkipped = 0, aabbSkipped = 0, bvhTested = 0, bvhHit = 0, noGeoSkipped = 0;
+  let ptSkipped = 0,
+    aabbSkipped = 0,
+    bvhTested = 0,
+    bvhHit = 0,
+    noGeoSkipped = 0;
 
   for (let batch = 0; batch < pairs.length; batch += BATCH_SIZE) {
     if (signal?.aborted) return new Set();
@@ -259,20 +264,29 @@ export async function detectCollidingPartIds(
       const dataB = getPartData(idB);
       if (!dataA || !dataB) continue;
 
-      if (isValidPullThroughPair(dataA.part, dataB.part)) { ptSkipped++; continue; }
+      if (isValidPullThroughPair(dataA.part, dataB.part)) {
+        ptSkipped++;
+        continue;
+      }
 
       // Shrink AABBs by a small tolerance to avoid false positives from
       // parts that merely touch at a shared boundary (e.g. adjacent connector + support)
       const AABB_TOLERANCE = 0.75; // mm
       const shrunkA = dataA.aabb.clone().expandByScalar(-AABB_TOLERANCE);
       const shrunkB = dataB.aabb.clone().expandByScalar(-AABB_TOLERANCE);
-      if (!shrunkA.intersectsBox(shrunkB)) { aabbSkipped++; continue; }
+      if (!shrunkA.intersectsBox(shrunkB)) {
+        aabbSkipped++;
+        continue;
+      }
 
       // Ensure both geometries have BVH for fast dual-tree traversal
       ensureBVH(dataA.part.definitionId);
       const bvhB = ensureBVH(dataB.part.definitionId);
       const geoA = getGeometryForPart(dataA.part.definitionId);
-      if (!bvhB || !geoA) { noGeoSkipped++; continue; }
+      if (!bvhB || !geoA) {
+        noGeoSkipped++;
+        continue;
+      }
 
       bvhTested++;
       const trisA = geoA.index ? geoA.index.count / 3 : geoA.attributes.position.count / 3;
@@ -294,7 +308,9 @@ export async function detectCollidingPartIds(
       const hit = bvhB.intersectsGeometry(geoA, matAToB);
       const dt = performance.now() - t0;
       if (dt > 10) {
-        console.warn(`[MeshCollision] SLOW pair: ${dataA.part.definitionId} (${trisA} tris) vs ${dataB.part.definitionId} (${trisB} tris) = ${dt.toFixed(1)}ms hit=${hit}`);
+        console.warn(
+          `[MeshCollision] SLOW pair: ${dataA.part.definitionId} (${trisA} tris) vs ${dataB.part.definitionId} (${trisB} tris) = ${dt.toFixed(1)}ms hit=${hit}`,
+        );
       }
       if (hit) {
         bvhHit++;
@@ -309,6 +325,8 @@ export async function detectCollidingPartIds(
     }
   }
 
-  console.log(`[MeshCollision] ptSkipped=${ptSkipped} aabbSkipped=${aabbSkipped} noGeo=${noGeoSkipped} bvhTested=${bvhTested} bvhHit=${bvhHit} colliding=${collidingIds.size}`);
+  console.log(
+    `[MeshCollision] ptSkipped=${ptSkipped} aabbSkipped=${aabbSkipped} noGeo=${noGeoSkipped} bvhTested=${bvhTested} bvhHit=${bvhHit} colliding=${collidingIds.size}`,
+  );
   return collidingIds;
 }

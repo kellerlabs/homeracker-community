@@ -27,9 +27,7 @@ test.describe("Snapfix: support placement through PT connector", () => {
     }, fixtureWithoutLast);
   });
 
-  test("findBestSnap near PT connector returns valid placeable candidate", async ({
-    appPage: page,
-  }) => {
+  test("findBestSnap near PT connector returns valid placeable candidate", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       const snap = (window as any).__snap;
@@ -60,9 +58,7 @@ test.describe("Snapfix: support placement through PT connector", () => {
     expect(result.placed).toBe(true);
   });
 
-  test("snapped support with user rotation around snapped axis is placeable", async ({
-    appPage: page,
-  }) => {
+  test("snapped support with user rotation around snapped axis is placeable", async ({ appPage: page }) => {
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;
       const snap = (window as any).__snap;
@@ -88,9 +84,7 @@ test.describe("Snapfix: support placement through PT connector", () => {
     expect(result.placed).toBe(true);
   });
 
-  test("all snap candidates near PT connector are placeable", async ({
-    appPage: page,
-  }) => {
+  test("all snap candidates near PT connector are placeable", async ({ appPage: page }) => {
     // Get ALL snap candidates (not just best), verify each is actually placeable
     const result = await page.evaluate(() => {
       const a = (window as any).__assembly;

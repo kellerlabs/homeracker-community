@@ -35,18 +35,12 @@ function supportDef(units: number): PartDefinition {
 }
 
 /** Generate a connector part definition */
-function connectorDef(
-  configId: string,
-  isFoot: boolean = false,
-  pullThroughAxis?: "x" | "y" | "z"
-): PartDefinition {
+function connectorDef(configId: string, isFoot: boolean = false, pullThroughAxis?: "x" | "y" | "z"): PartDefinition {
   const footSuffix = isFoot ? "-foot" : "";
   const ptSuffix = pullThroughAxis ? `-pt-${pullThroughAxis}` : "";
   const config = CONNECTOR_CONFIGS[configId];
   const footLabel = isFoot ? " Foot" : "";
-  const ptLabel = pullThroughAxis
-    ? ` PT-${pullThroughAxis.toUpperCase()}`
-    : "";
+  const ptLabel = pullThroughAxis ? ` PT-${pullThroughAxis.toUpperCase()}` : "";
 
   return {
     id: `connector-${configId}${footSuffix}${ptSuffix}`,
@@ -68,7 +62,7 @@ export const PART_CATALOG: PartDefinition[] = [
   // Connectors — generated from model manifest
   ...modelManifest.connectors.map((c) => {
     const configId = `${c.params.dimensions}d${c.params.directions}w`;
-    const pt = c.params.pull_through_axis !== "none" ? c.params.pull_through_axis as "x" | "y" | "z" : undefined;
+    const pt = c.params.pull_through_axis !== "none" ? (c.params.pull_through_axis as "x" | "y" | "z") : undefined;
     return connectorDef(configId, c.params.is_foot, pt);
   }),
 
@@ -93,16 +87,25 @@ export const PART_CATALOG: PartDefinition[] = [
   },
 
   // Other — raw models converted from raw-models/ directory
-  ...(rawModelsManifest as Array<{ id: string; name: string; file: string; group?: string }>).map((entry): PartDefinition => ({
-    id: entry.id,
-    category: "other",
-    name: entry.name,
-    description: entry.group ? `${entry.group} — ${entry.name}` : entry.name,
-    modelPath: `models/${entry.file}`,
-    connectionPoints: [],
-    gridCells: [[0, 0, 0]],
-    ...(entry.group ? { group: entry.group } : {}),
-  })),
+  ...(
+    rawModelsManifest as Array<{
+      id: string;
+      name: string;
+      file: string;
+      group?: string;
+    }>
+  ).map(
+    (entry): PartDefinition => ({
+      id: entry.id,
+      category: "other",
+      name: entry.name,
+      description: entry.group ? `${entry.group} — ${entry.name}` : entry.name,
+      modelPath: `models/${entry.file}`,
+      connectionPoints: [],
+      gridCells: [[0, 0, 0]],
+      ...(entry.group ? { group: entry.group } : {}),
+    }),
+  ),
 ];
 
 /** Look up a part definition by ID (checks built-in catalog, then custom parts) */
@@ -111,9 +114,7 @@ export function getPartDefinition(id: string): PartDefinition | undefined {
 }
 
 /** Get parts filtered by category */
-export function getPartsByCategory(
-  category: PartDefinition["category"]
-): PartDefinition[] {
+export function getPartsByCategory(category: PartDefinition["category"]): PartDefinition[] {
   if (category === "custom") return getCustomParts();
   return PART_CATALOG.filter((p) => p.category === category);
 }
