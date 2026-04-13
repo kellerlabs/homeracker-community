@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.5.0](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.4.0...homeracker-community-v0.5.0) (2026-04-13)
+
+
+### ✨ Features
+
+* **configurator:** add orthographic camera mode with perspective toggle ([#63](https://github.com/kellerlabs/homeracker-community/issues/63)) ([abb5e06](https://github.com/kellerlabs/homeracker-community/commit/abb5e06e18d7b3f8fcd0b0d29b73d00b80bf9d9c))
+
+
+### 📦 Dependencies
+
+* update dependency @playwright/test to v1.59.1 ([#57](https://github.com/kellerlabs/homeracker-community/issues/57)) ([72a699d](https://github.com/kellerlabs/homeracker-community/commit/72a699d259c9fab4caed87f179881137e1400b79))
+* update dependency kellerlabs/homeracker to homeracker-v2.0.1 ([#72](https://github.com/kellerlabs/homeracker-community/issues/72)) ([565ca96](https://github.com/kellerlabs/homeracker-community/commit/565ca9672eeaf0d405d4e801c2c367328555e5a4))
+* update dependency kellerlabs/homeracker to homeracker-v3.1.0 ([#75](https://github.com/kellerlabs/homeracker-community/issues/75)) ([2040bf8](https://github.com/kellerlabs/homeracker-community/commit/2040bf8214e9ae897b2f24fd1e185d9690ef1391))
+* update dependency kellerlabs/homeracker to v2 ([#71](https://github.com/kellerlabs/homeracker-community/issues/71)) ([883541a](https://github.com/kellerlabs/homeracker-community/commit/883541a7e386cbb58388c52892744bdf0211f890))
+* update dependency kellerlabs/homeracker to v3 ([#73](https://github.com/kellerlabs/homeracker-community/issues/73)) ([1734bc8](https://github.com/kellerlabs/homeracker-community/commit/1734bc857fffff43bf583e41bce0b491a440c517))
+* update dependency typescript to v6 ([#49](https://github.com/kellerlabs/homeracker-community/issues/49)) ([b2c03c6](https://github.com/kellerlabs/homeracker-community/commit/b2c03c67f88cd27c1337cbadc92f1063e6678608))
+* update pre-commit hook renovatebot/pre-commit-hooks to v43.110.14 ([#70](https://github.com/kellerlabs/homeracker-community/issues/70)) ([ab1dcfd](https://github.com/kellerlabs/homeracker-community/commit/ab1dcfddbab0372726147e041356e4284d7bcdc3))
+* update pre-commit hook renovatebot/pre-commit-hooks to v43.110.16 ([#74](https://github.com/kellerlabs/homeracker-community/issues/74)) ([84606ae](https://github.com/kellerlabs/homeracker-community/commit/84606ae593134c1ad7f60fce456e8e2354543d60))
+* update pre-commit hook renovatebot/pre-commit-hooks to v43.111.0 ([#76](https://github.com/kellerlabs/homeracker-community/issues/76)) ([a54c2fa](https://github.com/kellerlabs/homeracker-community/commit/a54c2fa21f6c1b43c3924676271b5708f8391f66))
+
+
+### 🔄 CI/CD
+
+* add Bun runtime to pre-commit workflow ([#68](https://github.com/kellerlabs/homeracker-community/issues/68)) ([c866047](https://github.com/kellerlabs/homeracker-community/commit/c8660470627feddaf9ab74bb5829ce4e7b7fee10))
+
+
+### 🔧 Miscellaneous
+
+* biome ts tsx formatting ([#67](https://github.com/kellerlabs/homeracker-community/issues/67)) ([a0bc88f](https://github.com/kellerlabs/homeracker-community/commit/a0bc88f80b809a763e0e4de3b70225c5f1e01555))
+
 ## [0.4.0](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.3.0...homeracker-community-v0.4.0) (2026-04-06)
 
 
