@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.5](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.5.4...homeracker-community-v0.5.5) (2026-05-24)
+
+
+### 📦 Dependencies
+
+* update dependency kellerlabs/homeracker to homeracker-v3.4.1 ([#98](https://github.com/kellerlabs/homeracker-community/issues/98)) ([1d41425](https://github.com/kellerlabs/homeracker-community/commit/1d41425dbf47f3eefff568f9165c65683d01a46d))
+* update dependency kellerlabs/homeracker to homeracker-v3.5.0 ([#101](https://github.com/kellerlabs/homeracker-community/issues/101)) ([e328d5c](https://github.com/kellerlabs/homeracker-community/commit/e328d5ca6ff03d42a513c5e7cf0cf5d6c5e8757c))
+
 ## [0.5.4](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.5.3...homeracker-community-v0.5.4) (2026-05-10)
 
 
