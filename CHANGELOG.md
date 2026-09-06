@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.20](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.5.19...homeracker-community-v0.5.20) (2026-09-06)
+
+
+### 📦 Dependencies
+
+* update belfryscad/bosl2 digest to 4f07f07 ([#191](https://github.com/kellerlabs/homeracker-community/issues/191)) ([a6fe9a7](https://github.com/kellerlabs/homeracker-community/commit/a6fe9a7b47c87fceea798d0536d6026524612815))
+* update belfryscad/bosl2 digest to 804028c ([#196](https://github.com/kellerlabs/homeracker-community/issues/196)) ([60e44e4](https://github.com/kellerlabs/homeracker-community/commit/60e44e451ebdd3833844589fadbf24c95d419223))
+* update belfryscad/bosl2 digest to a55e91a ([#195](https://github.com/kellerlabs/homeracker-community/issues/195)) ([6b2c6ad](https://github.com/kellerlabs/homeracker-community/commit/6b2c6adc6a7e9b0a8fd872835d9cb0b2376834a1))
+* update dependency kellerlabs/homeracker to homeracker-v3.13.8 ([#192](https://github.com/kellerlabs/homeracker-community/issues/192)) ([13dc170](https://github.com/kellerlabs/homeracker-community/commit/13dc170f4e377f335552caa6601bb2606ae9ff6f))
+* update pre-commit hook renovatebot/pre-commit-hooks to v44.65.5 ([#194](https://github.com/kellerlabs/homeracker-community/issues/194)) ([875416b](https://github.com/kellerlabs/homeracker-community/commit/875416b9c37ef82c082dfef46a5d0a40d6be15fc))
+
 ## [0.5.19](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.5.18...homeracker-community-v0.5.19) (2026-08-31)
 
 
