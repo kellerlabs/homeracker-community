@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.26](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.5.25...homeracker-community-v0.5.26) (2026-10-19)
+
+
+### 📦 Dependencies
+
+* update belfryscad/bosl2 digest to c318a67 ([#236](https://github.com/kellerlabs/homeracker-community/issues/236)) ([b19639f](https://github.com/kellerlabs/homeracker-community/commit/b19639ffc31230512fe344dd93cc5d5787541de1))
+* update belfryscad/bosl2 digest to f1493a8 ([#239](https://github.com/kellerlabs/homeracker-community/issues/239)) ([9c501a3](https://github.com/kellerlabs/homeracker-community/commit/9c501a38d940266921df5c4607e0f85a4c3ba0f8))
+* update dependency kellerlabs/homeracker to homeracker-v3.19.1 ([#237](https://github.com/kellerlabs/homeracker-community/issues/237)) ([4661442](https://github.com/kellerlabs/homeracker-community/commit/466144271787c49c739d0ce738bfc9f109ef3ba0))
+* update pre-commit hook renovatebot/pre-commit-hooks to v44.155.1 ([#234](https://github.com/kellerlabs/homeracker-community/issues/234)) ([ae7aa71](https://github.com/kellerlabs/homeracker-community/commit/ae7aa713ae33a458c786ed8ee5b1bf260071fb40))
+* update pre-commit hook renovatebot/pre-commit-hooks to v44.166.0 ([#238](https://github.com/kellerlabs/homeracker-community/issues/238)) ([ff383b6](https://github.com/kellerlabs/homeracker-community/commit/ff383b66db8799b16b07343724b046e1a2eff813))
+* update pre-commit hook renovatebot/pre-commit-hooks to v44.167.1 ([#240](https://github.com/kellerlabs/homeracker-community/issues/240)) ([c33734c](https://github.com/kellerlabs/homeracker-community/commit/c33734c13a76573d8b7b9f7a0259a700e0364b05))
+* update pre-commit hook renovatebot/pre-commit-hooks to v44.167.5 ([#241](https://github.com/kellerlabs/homeracker-community/issues/241)) ([799fc1a](https://github.com/kellerlabs/homeracker-community/commit/799fc1af8ece21569fad79753fcecaa3b7ee290b))
+
 ## [0.5.25](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.5.24...homeracker-community-v0.5.25) (2026-10-12)
 
 
