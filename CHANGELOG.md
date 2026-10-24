@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.27](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.5.26...homeracker-community-v0.5.27) (2026-10-24)
+
+
+### 📦 Dependencies
+
+* update belfryscad/bosl2 digest to d29d3e5 ([#242](https://github.com/kellerlabs/homeracker-community/issues/242)) ([014d16a](https://github.com/kellerlabs/homeracker-community/commit/014d16a2d90b523b1df9bca4b7781afe29782e11))
+* update dependency kellerlabs/homeracker to homeracker-v3.19.2 ([#243](https://github.com/kellerlabs/homeracker-community/issues/243)) ([9c0bfa1](https://github.com/kellerlabs/homeracker-community/commit/9c0bfa1a2cc49c33bf887a86f55b2b29f87f7753))
+
 ## [0.5.26](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.5.25...homeracker-community-v0.5.26) (2026-10-19)
 
 
