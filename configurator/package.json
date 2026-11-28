@@ -20,7 +20,7 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "three": "^0.172.0",
-    "three-mesh-bvh": "^0.9.9"
+    "three-mesh-bvh": "^0.10.0"
   },
   "devDependencies": {
 		"@biomejs/biome": "^2.4.10",
