@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.32](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.5.31...homeracker-community-v0.5.32) (2026-11-28)
+
+
+### 📦 Dependencies
+
+* update dependency kellerlabs/homeracker to homeracker-v3.21.0 ([#271](https://github.com/kellerlabs/homeracker-community/issues/271)) ([493bfee](https://github.com/kellerlabs/homeracker-community/commit/493bfeea39c7eaf2215a2b1fb63138e361cd2796))
+* update pre-commit hook renovatebot/pre-commit-hooks to v45 ([#273](https://github.com/kellerlabs/homeracker-community/issues/273)) ([6a542d8](https://github.com/kellerlabs/homeracker-community/commit/6a542d80280773b57276a5b83b417853d8572ec2))
+
 ## [0.5.31](https://github.com/kellerlabs/homeracker-community/compare/homeracker-community-v0.5.30...homeracker-community-v0.5.31) (2026-11-22)
 
 
